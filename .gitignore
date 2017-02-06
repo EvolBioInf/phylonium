@@ -1,0 +1,28 @@
+# autogen
+.deps/
+Makefile
+Makefile.in
+aclocal.m4
+ar-lib
+autom4te.cache/
+autoscan.log
+compile
+config.h
+config.hin
+config.log
+config.status
+configure
+configure.scan
+depcomp
+install-sh
+libs/.deps/
+libs/Makefile
+libs/Makefile.in
+missing
+stamp-h1
+test/
+
+# binaries
+*.o
+*.a
+mksupergenome
