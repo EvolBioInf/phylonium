@@ -1,7 +1,9 @@
 
 #include <algorithm>
+#include <cassert>
 #include <chrono>
 #include <cmath>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -299,9 +301,6 @@ auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 										  query_length - this_pos_Q);
 
 		this_length = std::max(inter.l, 0);
-		if (this_pos_Q + this_length > query_length) {
-			this_length = query_length - this_pos_Q;
-		}
 
 		if (inter.i == inter.j && this_length >= threshold) {
 			// anchor
@@ -356,7 +355,6 @@ auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 				  const homology &hb);
 
-static const char *deleteme = NULL;
 /**
  *
  */
@@ -366,13 +364,13 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 	auto start_time = std::chrono::steady_clock::now();
 	auto subject = join(reference);
 	auto ref = esa(subject); // seq + # + reverse
-	deleteme = subject.get_nucl().c_str();
 	auto homologies = std::vector<std::vector<homology>>(N);
 
 	auto gc = gc_content(subject.get_nucl());
 
 	if (FLAGS & flags::verbose) {
 		std::cerr << "ref: " << reference.get_name() << std::endl;
+		std::cerr << "length: " << subject.get_nucl().size() << std::endl;
 	}
 
 	auto queries = std::vector<sequence>();
@@ -395,8 +393,8 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 		homologies[j] = std::move(hvlocal);
 	}
 
-	auto end_time = std::chrono::steady_clock::now();
 	if (FLAGS & flags::verbose) {
+		auto end_time = std::chrono::steady_clock::now();
 		std::cerr << "aligning took "
 				  << std::chrono::duration_cast<std::chrono::milliseconds>(
 						 end_time - start_time)
@@ -422,19 +420,38 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 			auto pile = std::vector<homology>();
 
 			for (const auto &homo : homologies[i]) {
-				// erase homologies which are done
 				auto ends_left_of_homo = [&homo](const auto &other_homo) {
 					return other_homo.starts_left_of(homo) &&
 						   !other_homo.overlaps(homo);
 				};
 
+				auto overlaps_homo = [&homo](const auto &other_homo) {
+					return other_homo.overlaps(homo);
+				};
+
+				// erase homologies which are done
 				pile.erase(
 					std::remove_if(begin(pile), end(pile), ends_left_of_homo),
 					end(pile));
 
+				// skip elements left of homo!
+				right_ptr =
+					std::find_if_not(right_ptr, end(other), ends_left_of_homo);
+
 				// add new homologies
-				while (right_ptr != end(other) && right_ptr->overlaps(homo)) {
-					pile.push_back(*right_ptr++);
+				auto far_right_ptr =
+					find_if_not(right_ptr, end(other), overlaps_homo);
+
+				/* Note that this cannot be merged with the find above
+				 * into a single copy_if. The list of homologies is sorted!
+				 * Thus this combination is linear, whereas copy_if would
+				 * have a O(n^2) complexity.
+				 */
+				std::copy(right_ptr, far_right_ptr, std::back_inserter(pile));
+				right_ptr = far_right_ptr;
+
+				if (i == 0 && j == 1) {
+					std::cerr << "pile size: " << pile.size() << std::endl;
 				}
 
 				// compare homo against pile
@@ -456,7 +473,8 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 	for (size_t i = 0; i < N; i++) {
 		std::cout << genomes[i].get_name();
 		for (size_t j = 0; j < N; j++) {
-			std::cout << "  " << (i == j ? 0.0 : dist_matrix[i * N + j]);
+			std::cout << "  " << std::setw(8) << std::setprecision(4)
+					  << (i == j ? 0.0 : dist_matrix[i * N + j]);
 		}
 		std::cout << std::endl;
 	}
