@@ -53,16 +53,14 @@ std::vector<sequence> read_fasta(std::string s_file_name, std::string prefix)
 		s_file_name != "-" ? open(file_name, O_RDONLY) : STDIN_FILENO;
 
 	if (file_descriptor < 0) {
-		warn("%s", file_name);
-		throw "derp.";
+		err(errno, "%s", file_name);
 	}
 
 	int l;
 	pfasta_file pf;
 
 	if ((l = pfasta_parse(&pf, file_descriptor)) != 0) {
-		warnx("%s: %s", file_name, pfasta_strerror(&pf));
-		goto fail;
+		errx(1, "%s: %s", file_name, pfasta_strerror(&pf));
 	}
 
 	pfasta_seq ps;
@@ -72,8 +70,7 @@ std::vector<sequence> read_fasta(std::string s_file_name, std::string prefix)
 	}
 
 	if (l < 0) {
-		warnx("%s: %s", file_name, pfasta_strerror(&pf));
-		pfasta_seq_free(&ps);
+		errx(1, "%s: %s", file_name, pfasta_strerror(&pf));
 	}
 
 fail:
