@@ -134,42 +134,34 @@ int main(int argc, char *argv[])
 		errx(1, "At least one filename needs to be supplied.");
 	}
 
-	// at max `argc` many files have to be read.
-	auto genomes = std::vector<genome>();
-	genomes.reserve(argc);
-
-	// genome reference_genome;
-	auto file_names = std::vector<std::string>();
-	file_names.reserve(argc);
-
-	while (*argv) {
-		file_names.push_back(*argv++);
-	}
+	auto file_names = std::vector<std::string>(argv, argv + argc);
 
 	if (file_names.size() < 2) {
 		file_names.push_back("-"); // if no files are supplied, read from stdin
 	}
 
-	if (ref_name != "longest") {
-		if (std::find(file_names.begin(), file_names.end(), ref_name) ==
+	if (ref_name != "longest" &&
+		std::find(file_names.begin(), file_names.end(), ref_name) ==
 			file_names.end()) {
-			file_names.push_back(ref_name);
-		}
+		file_names.push_back(ref_name);
 	}
 
+	// at max `argc` many files have to be read.
+	auto genomes = std::vector<genome>();
+	genomes.reserve(argc);
+
 	// read all genomes
-	for (const auto &file_name : file_names) {
-		genomes.push_back(read_genome(file_name));
-	}
+	std::transform(file_names.begin(), file_names.end(),
+				   std::back_inserter(genomes), read_genome);
 
 	auto it = max_element(begin(genomes), end(genomes),
 						  [](const genome &a, const genome &b) {
 							  return a.get_length() < b.get_length();
 						  });
 	auto derp = std::find(file_names.begin(), file_names.end(), ref_name);
-	const auto& ref = (ref_name == std::string("longest"))
-				   ? *it
-				   : *(derp - file_names.begin() + genomes.begin());
+	const auto &ref = (ref_name == "longest")
+						  ? *it
+						  : *(derp - file_names.begin() + genomes.begin());
 
 	process(ref, genomes);
 
