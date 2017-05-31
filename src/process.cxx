@@ -54,6 +54,7 @@ class evo_model
 		if (hash_a < 0 || hash_b < 0) return;
 		if (b < a) {
 			std::swap(a, b);
+			std::swap(hash_a, hash_b);
 		}
 
 		// ensure a <= b
