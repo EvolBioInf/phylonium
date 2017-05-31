@@ -450,10 +450,6 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 				std::copy(right_ptr, far_right_ptr, std::back_inserter(pile));
 				right_ptr = far_right_ptr;
 
-				if (i == 0 && j == 1) {
-					std::cerr << "pile size: " << pile.size() << std::endl;
-				}
-
 				// compare homo against pile
 				for (const auto &other : pile) {
 					if (!homo.overlaps(other)) continue;
