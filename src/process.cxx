@@ -12,6 +12,8 @@
 #include "global.h"
 #include "sequence.h"
 
+char complement(char c);
+
 class evo_model
 {
   protected:
@@ -76,6 +78,24 @@ class evo_model
 		size_t mutations = 0;
 		for (size_t k = 0; k < length; k++) {
 			if (sa[k] != sb[k]) {
+				mutations++;
+			}
+		}
+
+		counts[AtoA] = length - mutations;
+		counts[AtoC] = mutations;
+	}
+
+	constexpr bool is_complement(char c, char d) const noexcept
+	{
+		return (~(c ^ d) & 2) && (c != d);
+	}
+
+	void account_rev(const char *sa, const char *sb, size_t b_offset, size_t length) noexcept
+	{
+		size_t mutations = 0;
+		for (size_t k = 0; k < length; k++) {
+			if (!is_complement(sa[k], sb[b_offset - 1 - k])) {
 				mutations++;
 			}
 		}
@@ -551,10 +571,7 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 		auto b_offset = hb.index_query + hb.length -
 						(common_start - hb.index_reference_projected);
 
-		for (size_t i = 0; i < length; i++) {
-			count.account(sa.c_str()[a_offset + i],
-						  complement(sb.c_str()[b_offset - 1 - i]));
-		}
+		count.account_rev(sa.c_str() + a_offset, sb.c_str(), b_offset, length);
 	} else if (ha.direction == homology::dir::reverse) {
 		auto b_offset =
 			common_start - hb.index_reference_projected + hb.index_query;
@@ -563,10 +580,7 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 		auto a_offset = ha.index_query + ha.length -
 						(common_start - ha.index_reference_projected);
 
-		for (size_t i = 0; i < length; i++) {
-			count.account(sb.c_str()[b_offset + i],
-						  complement(sa.c_str()[a_offset - 1 - i]));
-		}
+		count.account_rev(sb.c_str() + b_offset, sa.c_str(), a_offset, length);
 	}
 
 	return count;
