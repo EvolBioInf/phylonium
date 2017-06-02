@@ -71,6 +71,19 @@ class evo_model
 		counts[index]++;
 	}
 
+	void account(const char *sa, const char *sb, size_t length) noexcept
+	{
+		size_t mutations = 0;
+		for (size_t k = 0; k < length; k++) {
+			if (sa[k] != sb[k]) {
+				mutations++;
+			}
+		}
+
+		counts[AtoA] = length - mutations;
+		counts[AtoC] = mutations;
+	}
+
 	evo_model &operator+=(const evo_model &other) noexcept
 	{
 		for (int i = 0; i < MUTCOUNTS; i++) {
@@ -517,9 +530,7 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 		auto b_offset =
 			common_start - hb.index_reference_projected + hb.index_query;
 
-		for (size_t i = 0; i < length; i++) {
-			count.account(sa.c_str()[a_offset + i], sb.c_str()[b_offset + i]);
-		}
+		count.account(sa.c_str() + a_offset, sb.c_str() + b_offset, length);
 	} else if (ha.direction == hb.direction &&
 			   ha.direction == homology::dir::reverse) {
 		auto a_offset = ha.index_query + ha.length -
