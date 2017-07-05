@@ -45,7 +45,7 @@
 
 int FLAGS = flags::none;
 int THREADS = 1;
-double RANDOM_ANCHOR_PROP = 0.05;
+double RANDOM_ANCHOR_PROP = 0.025;
 
 void usage(int);
 void version(void);

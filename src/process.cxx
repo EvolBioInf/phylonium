@@ -157,14 +157,13 @@ double shuprop(size_t, double, size_t);
  * @param l - The length of the subject.
  * @returns The minimum length of an anchor.
  */
-size_t minAnchorLength(double p, double g, size_t l)
+size_t min_anchor_length(double p, double g, size_t l)
 {
 	size_t x = 1;
 
 	double prop = 0.0;
-	while (prop < 1 - p) {
+	for (; prop < 1 - p; x++) {
 		prop = shuprop(x, g / 2, l);
-		x++;
 	}
 
 	return x;
@@ -324,8 +323,7 @@ auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 	size_t this_pos_S;
 	size_t this_length;
 
-	size_t threshold =
-		minAnchorLength(1 - sqrt(1 - RANDOM_ANCHOR_PROP), gc, ref.size());
+	size_t threshold = min_anchor_length(RANDOM_ANCHOR_PROP, gc, ref.size());
 
 	auto current = homology(0, 0);
 
