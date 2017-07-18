@@ -483,7 +483,31 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 				right_ptr = far_right_ptr;
 
 				// compare homo against pile
-				for (const auto &other : pile) {
+/*				for (const auto &other : pile) {
+					mutations += compare(queries[i], homo, queries[j], other);
+				}
+*/
+				bool overlaps_left = false;
+				size_t k = 0;
+				for (; pile.size() > 0 && k < pile.size() - 1; k++){
+					const auto &other = pile[k];
+					if (!homo.overlaps(other)) continue;
+					const auto &next = pile[k+1];
+					if (other.overlaps(next)){
+						// on overlap, do nothing
+						overlaps_left = true;
+						continue;
+					}
+					if (overlaps_left) {
+						overlaps_left = false;
+						continue;
+					}
+					overlaps_left = false;
+					mutations += compare(queries[i], homo, queries[j], other);
+				}
+
+				if (k < pile.size() && !overlaps_left) {
+					const auto &other = pile[k];
 					if (!homo.overlaps(other)) continue;
 					mutations += compare(queries[i], homo, queries[j], other);
 				}
@@ -531,6 +555,10 @@ char complement(char c)
 evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 				  const homology &hb)
 {
+	if (!ha.overlaps(hb)){
+		return evo_model{};
+	}
+
 	auto count = evo_model{};
 	size_t common_start =
 		std::max(ha.index_reference_projected, hb.index_reference_projected);
@@ -538,6 +566,7 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 	size_t common_end = std::min(ha.index_reference_projected + ha.length,
 								 hb.index_reference_projected + hb.length);
 
+	assert(common_start < common_end);
 	size_t length = common_end - common_start;
 
 	if (ha.direction == hb.direction &&
