@@ -387,6 +387,36 @@ auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 				  const homology &hb);
 
+
+void filter_overlaps(std::vector<homology> &pile)
+{
+	if (pile.size() < 2) return;
+
+	auto next = std::begin(pile) + 1;
+	size_t border = 0;
+
+	// capture mode has to be by-reference, otherwise bad things happen.
+	// See https://gcc.gnu.org/bugzilla/show_bug.cgi?id=81482
+	auto filter = [&](const homology &homo) {
+		bool overlaps_left = border > homo.index_reference_projected;
+		border = std::max(border, homo.index_reference_projected + homo.length);
+		bool overlaps_right = homo.overlaps(*next);
+		next++;
+		return overlaps_left || overlaps_right;
+	};
+
+	// the last homology can only overlap to the left
+	auto remove_last = (pile.end() - 2)->overlaps(*(pile.end() - 1));
+	auto split = std::remove_if(pile.begin(), pile.end() - 1, filter);
+
+	if (!remove_last) {
+		std::swap(*split, *(pile.end() - 1));
+		split++;
+	}
+
+	pile.erase(split, pile.end());
+}
+
 /**
  *
  */
@@ -421,6 +451,8 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 					  return self.index_reference_projected <
 							 other.index_reference_projected;
 				  });
+
+		filter_overlaps(hvlocal);
 
 		homologies[j] = std::move(hvlocal);
 	}
@@ -483,32 +515,7 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 				right_ptr = far_right_ptr;
 
 				// compare homo against pile
-/*				for (const auto &other : pile) {
-					mutations += compare(queries[i], homo, queries[j], other);
-				}
-*/
-				bool overlaps_left = false;
-				size_t k = 0;
-				for (; pile.size() > 0 && k < pile.size() - 1; k++){
-					const auto &other = pile[k];
-					if (!homo.overlaps(other)) continue;
-					const auto &next = pile[k+1];
-					if (other.overlaps(next)){
-						// on overlap, do nothing
-						overlaps_left = true;
-						continue;
-					}
-					if (overlaps_left) {
-						overlaps_left = false;
-						continue;
-					}
-					overlaps_left = false;
-					mutations += compare(queries[i], homo, queries[j], other);
-				}
-
-				if (k < pile.size() && !overlaps_left) {
-					const auto &other = pile[k];
-					if (!homo.overlaps(other)) continue;
+				for (const auto &other : pile) {
 					mutations += compare(queries[i], homo, queries[j], other);
 				}
 			}
