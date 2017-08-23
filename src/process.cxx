@@ -91,7 +91,8 @@ class evo_model
 		return (~(c ^ d) & 2) && (c != d);
 	}
 
-	void account_rev(const char *sa, const char *sb, size_t b_offset, size_t length) noexcept
+	void account_rev(const char *sa, const char *sb, size_t b_offset,
+					 size_t length) noexcept
 	{
 		size_t mutations = 0;
 		for (size_t k = 0; k < length; k++) {
@@ -301,6 +302,15 @@ class homology
 	}
 };
 
+size_t lcp(const char *S, const char *Q, size_t remaining)
+{
+	size_t length = 0;
+	while (length < remaining && S[length] == Q[length]) {
+		length++;
+	}
+	return length;
+}
+
 /**
  * @brief Compute homologies between two sequences.
  */
@@ -327,24 +337,44 @@ auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 
 	auto current = homology(0, 0);
 
-	// Iterate over the complete query.
-	while (this_pos_Q < query_length) {
+	auto anchor = [&]() {
 		auto inter = ref.get_match_cached(seq.c_str() + this_pos_Q,
 										  query_length - this_pos_Q);
-
 		this_length = std::max(inter.l, 0);
+		this_pos_S = ref.SA[inter.i];
+		return inter.i == inter.j && this_length >= threshold;
+	};
 
-		if (inter.i == inter.j && this_length >= threshold) {
+	auto lucky_anchor = [&]() {
+		size_t advance = this_pos_Q - last_pos_Q;
+		size_t gap = this_pos_Q - last_pos_Q - last_length;
+
+		size_t try_pos_S = last_pos_S + advance;
+
+		if (try_pos_S >= static_cast<size_t>(ref.size()) || gap > threshold) {
+			return false;
+		}
+
+		this_pos_S = try_pos_S;
+		this_length = lcp(&seq.c_str()[this_pos_Q], &ref.S.c_str()[try_pos_S],
+						  query_length - this_pos_Q);
+
+		return this_length >= threshold;
+	};
+
+	// Iterate over the complete query.
+	while (this_pos_Q < query_length) {
+		if (lucky_anchor() || anchor()) {
 			// anchor
-			this_pos_S = ref.SA[inter.i];
 
-			if (this_pos_S > last_pos_S &&
-				this_pos_Q - last_pos_Q == this_pos_S - last_pos_S &&
+			size_t end_S = last_pos_S + last_length;
+			size_t end_Q = last_pos_Q + last_length;
+			if (this_pos_S > end_S &&
+				this_pos_Q - end_Q == this_pos_S - end_S &&
 				(this_pos_S < border) == (last_pos_S < border)) {
 				// right anchor
 
-				current.extend(this_pos_Q - last_pos_Q - last_length +
-							   this_length);
+				current.extend(this_pos_Q - end_Q + this_length);
 
 				last_was_right_anchor = true;
 			} else {
@@ -386,7 +416,6 @@ auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 
 evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 				  const homology &hb);
-
 
 void filter_overlaps(std::vector<homology> &pile)
 {
@@ -562,7 +591,7 @@ char complement(char c)
 evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 				  const homology &hb)
 {
-	if (!ha.overlaps(hb)){
+	if (!ha.overlaps(hb)) {
 		return evo_model{};
 	}
 
