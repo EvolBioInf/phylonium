@@ -129,15 +129,16 @@ int main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	// at least one file name must be given
-	if (argc == 0) {
-		errx(1, "At least one filename needs to be supplied.");
-	}
-
 	auto file_names = std::vector<std::string>(argv, argv + argc);
 
 	if (file_names.size() < 2) {
-		file_names.push_back("-"); // if no files are supplied, read from stdin
+		if (!isatty(STDIN_FILENO)) {
+			// if no files are supplied, read from stdin
+			file_names.push_back("-");
+		} else {
+			// print a helpful message on './phylonium' without args
+			usage(EXIT_FAILURE);
+		}
 	}
 
 	if (ref_name != "longest" &&
@@ -146,37 +147,49 @@ int main(int argc, char *argv[])
 		file_names.push_back(ref_name);
 	}
 
-	// at max `argc` many files have to be read.
+	// at max `file_names` many files have to be read.
 	auto genomes = std::vector<genome>();
-	genomes.reserve(argc);
+	genomes.reserve(file_names.size());
 
 	// read all genomes
 	std::transform(file_names.begin(), file_names.end(),
 				   std::back_inserter(genomes), read_genome);
 
-	auto it = max_element(begin(genomes), end(genomes),
+	auto longest_genome_it = max_element(begin(genomes), end(genomes),
 						  [](const genome &a, const genome &b) {
 							  return a.get_length() < b.get_length();
 						  });
-	auto derp = std::find(file_names.begin(), file_names.end(), ref_name);
+	auto ref_file_name_it = std::find(file_names.begin(), file_names.end(), ref_name);
 	const auto &ref = (ref_name == "longest")
-						  ? *it
-						  : *(derp - file_names.begin() + genomes.begin());
+						  ? *longest_genome_it
+						  : *(ref_file_name_it - file_names.begin() + genomes.begin());
 
-	process(ref, genomes);
+	if (genomes.size() < 2 ) {
+		errx(1, "Less than two genomes given, nothing to compare.");
+	}
+
+	auto queries = std::vector<sequence>();
+	auto inserter = std::back_inserter(queries);
+	queries.reserve(genomes.size());
+	std::transform(std::begin(genomes), std::end(genomes), inserter, join);
+
+	auto subject = join(ref);
+	genomes.clear();
+
+	process(subject, queries);
 
 	return 0;
 }
 
-/**@brief
+/** @brief
  * Prints the usage to stdout and then exits successfully.
  */
 void usage(int status)
 {
 	const char str[] = {
 		"Usage: phylonium [-lv] [-t INT] FILES...\n"
-		"\tFILES... can be any sequence of FASTA files. If no files are "
-		"supplied, stdin is used instead.\n"
+		"\tFILES... can be any sequence of FASTA files.\n"
+		"\tUse '-' to force reading from standard input.\n"
 		"Options:\n"
 		"  -r longest|FILENAME   Use the sequence from FILENAME as reference;"
 		"default: longest\n"

@@ -449,25 +449,20 @@ void filter_overlaps(std::vector<homology> &pile)
 /**
  *
  */
-void process(const genome &reference, const std::vector<genome> &genomes)
+void process(const sequence &subject, const std::vector<sequence> &queries)
 {
-	auto N = genomes.size();
+
+	auto N = queries.size();
 	auto start_time = std::chrono::steady_clock::now();
-	auto subject = join(reference);
 	auto ref = esa(subject); // seq + # + reverse
 	auto homologies = std::vector<std::vector<homology>>(N);
 
 	auto gc = gc_content(subject.get_nucl());
 
 	if (FLAGS & flags::verbose) {
-		std::cerr << "ref: " << reference.get_name() << std::endl;
+		std::cerr << "ref: " << subject.get_name() << std::endl;
 		std::cerr << "length: " << subject.get_nucl().size() << std::endl;
 	}
-
-	auto queries = std::vector<sequence>();
-	auto inserter = std::back_inserter(queries);
-	queries.reserve(N);
-	std::transform(begin(genomes), end(genomes), inserter, join);
 
 // now compare every sequence to the subject
 #pragma omp parallel for num_threads(THREADS)
@@ -524,16 +519,16 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 
 				// erase homologies which are done
 				pile.erase(
-					std::remove_if(begin(pile), end(pile), ends_left_of_homo),
+					std::remove_if(std::begin(pile), std::end(pile), ends_left_of_homo),
 					end(pile));
 
 				// skip elements left of homo!
 				right_ptr =
-					std::find_if_not(right_ptr, end(other), ends_left_of_homo);
+					std::find_if_not(right_ptr, std::end(other), ends_left_of_homo);
 
 				// add new homologies
 				auto far_right_ptr =
-					find_if_not(right_ptr, end(other), overlaps_homo);
+					find_if_not(right_ptr, std::end(other), overlaps_homo);
 
 				/* Note that this cannot be merged with the find above
 				 * into a single copy_if. The list of homologies is sorted!
@@ -554,12 +549,12 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 	}
 
 	auto dist_matrix = std::vector<double>(N * N, NAN);
-	std::transform(begin(matrix), end(matrix), begin(dist_matrix),
+	std::transform(std::begin(matrix), std::end(matrix), std::begin(dist_matrix),
 				   [](const evo_model &em) { return em.estimate_JC(); });
 
 	std::cout << N << std::endl;
 	for (size_t i = 0; i < N; i++) {
-		std::cout << genomes[i].get_name();
+		std::cout << queries[i].get_name();
 		for (size_t j = 0; j < N; j++) {
 			std::cout << "  " << std::setw(8) << std::setprecision(4)
 					  << (i == j ? 0.0 : dist_matrix[i * N + j]);
@@ -571,9 +566,10 @@ void process(const genome &reference, const std::vector<genome> &genomes)
 		std::cerr << "\nCoverages:\n";
 		for (size_t i = 0; i < N; i++) {
 			for (size_t j = 0; j < N; j++) {
+				// TODO: queries[j].get_length() wrong length!
 				std::cerr << std::setw(8) << std::setprecision(4)
 						  << matrix[i * N + j].total() /
-								 ((double)genomes[j].get_length())
+								 ((double)queries[j].size())
 						  << "  ";
 			}
 			std::cerr << std::endl;
