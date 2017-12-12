@@ -25,4 +25,4 @@ test/
 # binaries
 *.o
 *.a
-mksupergenome
+src/phylonium
