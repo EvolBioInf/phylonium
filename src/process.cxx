@@ -162,9 +162,8 @@ size_t min_anchor_length(double p, double g, size_t l)
 {
 	size_t x = 1;
 
-	double prop = 0.0;
-	for (; prop < 1 - p; x++) {
-		prop = shuprop(x, g / 2, l);
+	while(shuprop(x, g / 2, l) < 1 - p) {
+		x++;
 	}
 
 	return x;
