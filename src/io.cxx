@@ -84,5 +84,5 @@ genome read_genome(std::string file_name)
 {
 	std::string species{extract_genome(file_name.c_str())};
 
-	return genome{species, read_fasta(file_name, species + ".")};
+	return genome{species, read_fasta(file_name, "")};
 }

@@ -122,16 +122,15 @@ double gc_content(const std::string &seq) noexcept
  */
 sequence join(const genome &gen)
 {
-	auto joined = sequence();
-	const auto contigs = gen.get_contigs();
+	const auto& contigs = gen.get_contigs();
 
 	if (contigs.size() == 0) {
-		return joined;
+		return sequence();
 	}
 
 	if (contigs.size() == 1) {
-		joined = contigs[0];
-		return joined;
+		// use genome name, not sequence name.
+		return sequence(gen.get_name(), contigs[0].get_nucl());
 	}
 
 	size_t total = gen.get_length();
