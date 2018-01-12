@@ -187,9 +187,9 @@ int main(int argc, char *argv[])
 void usage(int status)
 {
 	const char str[] = {
-		"Usage: phylonium [-lv] [-t INT] FILES...\n"
+		"Usage: phylonium [OPTIONS] FILES...\n"
 		"\tFILES... can be any sequence of FASTA files.\n"
-		"\tUse '-' to force reading from standard input.\n"
+		"\tUse '-' to force reading from standard input.\n\n"
 		"Options:\n"
 		"  -r longest|FILENAME   Use the sequence from FILENAME as reference;"
 		"default: longest\n"
@@ -214,7 +214,7 @@ void version(void)
 {
 	const char str[] = {
 		"phylonium " VERSION "\n"
-		"Copyright (C) 2017 Fabian Klötzl\n"
+		"Copyright (C) 2017 - 2018 Fabian Klötzl\n"
 		"License GPLv3+: GNU GPL version 3 or later "
 		"<http://gnu.org/licenses/gpl.html>\n"
 		"This is free software: you are free to change and redistribute it.\n"
