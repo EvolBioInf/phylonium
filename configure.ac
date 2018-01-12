@@ -1,4 +1,4 @@
-AC_INIT([phylonium], [0.1])
+AC_INIT([phylonium], [0.2])
 AM_INIT_AUTOMAKE([-Wall foreign ])
 
 AC_CONFIG_MACRO_DIR([m4])
