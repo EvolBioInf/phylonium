@@ -9,13 +9,36 @@
 #include <string>
 #include <vector>
 #include "esa.h"
+#include "evo_model.h"
 #include "global.h"
 #include "sequence.h"
-#include "evo_model.h"
 
 char complement(char c);
 
 double shuprop(size_t, double, size_t);
+
+template <class InputIt, class UnaryPredicate>
+InputIt find_if_i(InputIt first, InputIt last, UnaryPredicate p)
+{
+	auto begin = first;
+	for (; first != last; ++first) {
+		if (p(first - begin)) {
+			return first;
+		}
+	}
+	return last;
+}
+
+template <class ForwardIt, class UnaryPredicate>
+ForwardIt remove_if_i(ForwardIt first, ForwardIt last, UnaryPredicate p)
+{
+	auto begin = first;
+	first = find_if_i(first, last, p);
+	if (first != last)
+		for (ForwardIt i = first; ++i != last;)
+			if (!p(i - begin)) *first++ = std::move(*i);
+	return first;
+}
 
 /**
  * @brief Calculates the minimum anchor length.
@@ -32,7 +55,7 @@ size_t min_anchor_length(double p, double g, size_t l)
 {
 	size_t x = 1;
 
-	while(shuprop(x, g / 2, l) < 1 - p) {
+	while (shuprop(x, g / 2, l) < 1 - p) {
 		x++;
 	}
 
@@ -156,18 +179,23 @@ class homology
 		if (index_reference_projected == other.index_reference_projected) {
 			return true;
 		}
-		if (index_reference_projected < other.index_reference_projected) {
-			return index_reference_projected + length >
-				   other.index_reference_projected;
-		}
-		// else: index_reference_projected > other.index_reference_projected
-		return index_reference_projected <
-			   other.index_reference_projected + other.length;
+		if (starts_left_of(other)) return !ends_left_of(other);
+		if (other.starts_left_of(*this)) return !other.ends_left_of(*this);
+
+		// no more case
+		// should not be executed
+		return false;
 	}
 
 	bool starts_left_of(const homology &other) const noexcept
 	{
 		return index_reference_projected < other.index_reference_projected;
+	}
+
+	bool ends_left_of(const homology &other) const noexcept
+	{
+		return index_reference_projected + length <=
+			   other.index_reference_projected;
 	}
 };
 
@@ -249,6 +277,7 @@ auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 			} else {
 				// no anchor pair, left anchor!
 				if (last_was_right_anchor || last_length / 2 >= threshold) {
+
 					// push last
 					current.reverseEh(border);
 					hv.push_back(std::move(current));
@@ -286,7 +315,7 @@ auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 				  const homology &hb);
 
-void filter_overlaps(std::vector<homology> &pile)
+void filter_overlaps_strict(std::vector<homology> &pile)
 {
 	if (pile.size() < 2) return;
 
@@ -311,6 +340,56 @@ void filter_overlaps(std::vector<homology> &pile)
 		std::swap(*split, *(pile.end() - 1));
 		split++;
 	}
+
+	pile.erase(split, pile.end());
+}
+
+
+void filter_overlaps_max(std::vector<homology> &pile)
+{
+	if (pile.size() < 2) return;
+
+	size_t size = pile.size();
+
+	auto predecessor = std::vector<ssize_t>(size, -1);
+	auto score = std::vector<size_t>(size, 0);
+
+	assert(predecessor.size() == size);
+	assert(score.size() == size);
+
+	score[0] = pile[0].length;
+
+	for (ssize_t i = 1; i < size; i++) {
+		// find maximum, so far
+		auto max_value = (ssize_t)0;
+		auto max_index = (ssize_t)0;
+
+		for (ssize_t k = 0; k < i; k++) {
+			if (!pile[k].ends_left_of(pile[i])) continue;
+
+			if (score[k] > max_value) {
+				max_value = score[k];
+				max_index = k;
+			}
+		}
+
+		assert(0 <= max_index && max_index < i);
+		predecessor[i] = max_index;
+		score[i] = score[max_index] + pile[i].length;
+	}
+
+	auto visited = std::vector<bool>(size, false);
+
+	auto that = std::max_element(score.begin(), score.end());
+
+	ssize_t index = that - score.begin();
+	while (index >= 0) {
+		visited[index] = true;
+		index = predecessor[index];
+	}
+
+	auto split = remove_if_i(pile.begin(), pile.end(),
+							 [&](size_t index) { return !visited[index]; });
 
 	pile.erase(split, pile.end());
 }
@@ -341,11 +420,10 @@ void process(const sequence &subject, const std::vector<sequence> &queries)
 		auto hvlocal = anchor_homologies(ref, gc, query);
 		std::sort(begin(hvlocal), end(hvlocal),
 				  [](const homology &self, const homology &other) {
-					  return self.index_reference_projected <
-							 other.index_reference_projected;
+					  return self.starts_left_of(other);
 				  });
 
-		filter_overlaps(hvlocal);
+		filter_overlaps_max(hvlocal);
 
 		homologies[j] = std::move(hvlocal);
 	}
@@ -378,8 +456,7 @@ void process(const sequence &subject, const std::vector<sequence> &queries)
 
 			for (const auto &homo : homologies[i]) {
 				auto ends_left_of_homo = [&homo](const auto &other_homo) {
-					return other_homo.starts_left_of(homo) &&
-						   !other_homo.overlaps(homo);
+					return other_homo.ends_left_of(homo);
 				};
 
 				auto overlaps_homo = [&homo](const auto &other_homo) {
@@ -387,17 +464,17 @@ void process(const sequence &subject, const std::vector<sequence> &queries)
 				};
 
 				// erase homologies which are done
-				pile.erase(
-					std::remove_if(std::begin(pile), std::end(pile), ends_left_of_homo),
-					end(pile));
+				auto split =
+					std::remove_if(pile.begin(), pile.end(), ends_left_of_homo);
+				pile.erase(split, end(pile));
 
 				// skip elements left of homo!
 				right_ptr =
-					std::find_if_not(right_ptr, std::end(other), ends_left_of_homo);
+					std::find_if_not(right_ptr, other.end(), ends_left_of_homo);
 
 				// add new homologies
 				auto far_right_ptr =
-					find_if_not(right_ptr, std::end(other), overlaps_homo);
+					find_if_not(right_ptr, other.end(), overlaps_homo);
 
 				/* Note that this cannot be merged with the find above
 				 * into a single copy_if. The list of homologies is sorted!
@@ -408,8 +485,9 @@ void process(const sequence &subject, const std::vector<sequence> &queries)
 				right_ptr = far_right_ptr;
 
 				// compare homo against pile
-				for (const auto &other : pile) {
-					mutations += compare(queries[i], homo, queries[j], other);
+				for (const auto &other_homo : pile) {
+					mutations +=
+						compare(queries[i], homo, queries[j], other_homo);
 				}
 			}
 
@@ -418,7 +496,8 @@ void process(const sequence &subject, const std::vector<sequence> &queries)
 	}
 
 	auto dist_matrix = std::vector<double>(N * N, NAN);
-	std::transform(std::begin(matrix), std::end(matrix), std::begin(dist_matrix),
+	std::transform(std::begin(matrix), std::end(matrix),
+				   std::begin(dist_matrix),
 				   [](const evo_model &em) { return em.estimate_JC(); });
 
 	std::cout << N << std::endl;
@@ -473,6 +552,7 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 	if (ha.direction == hb.direction &&
 		ha.direction == homology::dir::forward) {
 		// simple comparison
+
 		auto a_offset =
 			common_start - ha.index_reference_projected + ha.index_query;
 		auto b_offset =

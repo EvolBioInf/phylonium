@@ -131,6 +131,13 @@ int main(int argc, char *argv[])
 
 	auto file_names = std::vector<std::string>(argv, argv + argc);
 
+
+	if (ref_name != "longest" &&
+		std::find(file_names.begin(), file_names.end(), ref_name) ==
+			file_names.end()) {
+		file_names.push_back(ref_name);
+	}
+
 	if (file_names.size() < 2) {
 		if (!isatty(STDIN_FILENO)) {
 			// if no files are supplied, read from stdin
@@ -139,12 +146,6 @@ int main(int argc, char *argv[])
 			// print a helpful message on './phylonium' without args
 			usage(EXIT_FAILURE);
 		}
-	}
-
-	if (ref_name != "longest" &&
-		std::find(file_names.begin(), file_names.end(), ref_name) ==
-			file_names.end()) {
-		file_names.push_back(ref_name);
 	}
 
 	// at max `file_names` many files have to be read.

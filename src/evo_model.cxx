@@ -2,6 +2,7 @@
 #include <cmath>
 #include <iterator>
 #include <numeric>
+#include <assert.h>
 #include "evo_model.h"
 
 
@@ -46,13 +47,18 @@ void evo_model::account(const char *sa, const char *sb, size_t length) noexcept
 		}
 	}
 
-	counts[AtoA] = length - mutations;
-	counts[AtoC] = mutations;
+	counts[AtoA] += length - mutations;
+	counts[AtoC] += mutations;
 }
 
 constexpr bool is_complement(char c, char d)
 {
-	return (~(c ^ d) & 2) && (c != d);
+	if (c == 'A') return d  == 'T';
+	if (c == 'C') return d  == 'G';
+	if (c == 'G') return d  == 'C';
+	if (c == 'T') return d  == 'A';
+	return false;
+	// return (~(c ^ d) & 2) && (c != d);
 }
 
 void evo_model::account_rev(const char *sa, const char *sb, size_t b_offset,
@@ -65,8 +71,8 @@ void evo_model::account_rev(const char *sa, const char *sb, size_t b_offset,
 		}
 	}
 
-	counts[AtoA] = length - mutations;
-	counts[AtoC] = mutations;
+	counts[AtoA] += length - mutations;
+	counts[AtoC] += mutations;
 }
 
 evo_model &evo_model::operator+=(const evo_model &other) noexcept
@@ -74,6 +80,9 @@ evo_model &evo_model::operator+=(const evo_model &other) noexcept
 	for (int i = 0; i < MUTCOUNTS; i++) {
 		counts[i] += other.counts[i];
 	}
+
+	for (int i = MUTCOUNTS; i < sizeof(counts)/sizeof(counts[0]); i++)
+		assert(counts[i] == 0);
 
 	return *this;
 }
