@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstring>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <string>
@@ -314,6 +315,8 @@ auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 
 evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 				  const homology &hb);
+evo_model compare(const sequence &sa, const std::vector<homology> &ha,
+				  const sequence &sb, const std::vector<homology> &hb);
 
 void filter_overlaps_strict(std::vector<homology> &pile)
 {
@@ -343,7 +346,6 @@ void filter_overlaps_strict(std::vector<homology> &pile)
 
 	pile.erase(split, pile.end());
 }
-
 
 void filter_overlaps_max(std::vector<homology> &pile)
 {
@@ -446,52 +448,9 @@ void process(const sequence &subject, const std::vector<sequence> &queries)
 #pragma omp parallel for num_threads(THREADS)
 	for (size_t i = 0; i < N; i++) {
 		for (size_t j = i + 1; j < N; j++) {
-			auto mutations = evo_model();
-			// compare i and j
-			// compare homologies[i] and homologies[j]
-			const auto &other = homologies[j];
-			auto right_ptr = begin(other);
 
-			auto pile = std::vector<homology>();
-
-			for (const auto &homo : homologies[i]) {
-				auto ends_left_of_homo = [&homo](const auto &other_homo) {
-					return other_homo.ends_left_of(homo);
-				};
-
-				auto overlaps_homo = [&homo](const auto &other_homo) {
-					return other_homo.overlaps(homo);
-				};
-
-				// erase homologies which are done
-				auto split =
-					std::remove_if(pile.begin(), pile.end(), ends_left_of_homo);
-				pile.erase(split, end(pile));
-
-				// skip elements left of homo!
-				right_ptr =
-					std::find_if_not(right_ptr, other.end(), ends_left_of_homo);
-
-				// add new homologies
-				auto far_right_ptr =
-					find_if_not(right_ptr, other.end(), overlaps_homo);
-
-				/* Note that this cannot be merged with the find above
-				 * into a single copy_if. The list of homologies is sorted!
-				 * Thus this combination is linear, whereas copy_if would
-				 * have a O(n^2) complexity.
-				 */
-				std::copy(right_ptr, far_right_ptr, std::back_inserter(pile));
-				right_ptr = far_right_ptr;
-
-				// compare homo against pile
-				for (const auto &other_homo : pile) {
-					mutations +=
-						compare(queries[i], homo, queries[j], other_homo);
-				}
-			}
-
-			M(j, i) = M(i, j) += mutations;
+			M(j, i) = M(i, j) +=
+				compare(queries[i], homologies[i], queries[j], homologies[j]);
 		}
 	}
 
@@ -511,16 +470,16 @@ void process(const sequence &subject, const std::vector<sequence> &queries)
 	}
 
 	if (FLAGS & flags::verbose) {
-		std::cerr << "\nCoverages:\n";
+		auto covf = std::ofstream(subject.get_name() + ".abscov");
+		covf << "Absolute Coverages:\n";
 		for (size_t i = 0; i < N; i++) {
 			for (size_t j = 0; j < N; j++) {
 				// TODO: queries[j].get_length() wrong length!
-				std::cerr << std::setw(8) << std::setprecision(4)
-						  << matrix[i * N + j].total() /
-								 ((double)queries[j].size())
-						  << "  ";
+				covf << std::setw(8) << std::setprecision(4)
+					 << M(i, j).total() /* / ((double)queries[j].size())*/
+					 << "  ";
 			}
-			std::cerr << std::endl;
+			covf << std::endl;
 		}
 	}
 }
@@ -530,6 +489,53 @@ char complement(char c)
 	if (evo_model::hash(c) < 0) return 0;
 	static const char inv[] = "TGCA";
 	return inv[evo_model::hash(c)];
+}
+
+evo_model compare(const sequence &sa, const std::vector<homology> &ha,
+				  const sequence &sb, const std::vector<homology> &hb)
+{
+	auto mutations = evo_model();
+
+	const auto &other = hb;
+	auto right_ptr = begin(other);
+
+	auto pile = std::vector<homology>();
+
+	for (const auto &homo : ha) {
+		auto ends_left_of_homo = [&homo](const auto &other_homo) {
+			return other_homo.ends_left_of(homo);
+		};
+
+		auto overlaps_homo = [&homo](const auto &other_homo) {
+			return other_homo.overlaps(homo);
+		};
+
+		// erase homologies which are done
+		auto split =
+			std::remove_if(pile.begin(), pile.end(), ends_left_of_homo);
+		pile.erase(split, end(pile));
+
+		// skip elements left of homo!
+		right_ptr = std::find_if_not(right_ptr, other.end(), ends_left_of_homo);
+
+		// add new homologies
+		auto far_right_ptr = find_if_not(right_ptr, other.end(), overlaps_homo);
+
+		/* Note that this cannot be merged with the find above
+		 * into a single copy_if. The list of homologies is sorted!
+		 * Thus this combination is linear, whereas copy_if would
+		 * have a O(n^2) complexity.
+		 */
+		std::copy(right_ptr, far_right_ptr, std::back_inserter(pile));
+		right_ptr = far_right_ptr;
+
+		// compare homo against pile
+		for (const auto &other_homo : pile) {
+			mutations += compare(sa, homo, sb, other_homo);
+		}
+	}
+
+	return mutations;
 }
 
 evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
