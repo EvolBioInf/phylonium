@@ -26,6 +26,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <functional>
 
 #include <err.h>
 #include <errno.h>
@@ -53,7 +54,7 @@ void version(void);
 int main(int argc, char *argv[])
 {
 	int version_flag = 0;
-	auto ref_name = std::string("longest");
+	auto reference_names = std::vector<std::string>();
 
 	static struct option long_options[] = {
 		{"version", no_argument, &version_flag, 1},
@@ -79,7 +80,7 @@ int main(int argc, char *argv[])
 			case 0: break;
 			case 'h': usage(EXIT_SUCCESS); break;
 			case 'r': {
-				ref_name = std::string(optarg);
+				reference_names.push_back(optarg);
 				break;
 			}
 			case 't': {
@@ -129,14 +130,19 @@ int main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	auto file_names = std::vector<std::string>(argv, argv + argc);
+	auto extra_file_names = std::vector<std::string>(argv, argv + argc);
 
+	// add missing reference names to file names
+	std::sort(reference_names.begin(), reference_names.end());
+	std::sort(extra_file_names.begin(), extra_file_names.end());
 
-	if (ref_name != "longest" &&
-		std::find(file_names.begin(), file_names.end(), ref_name) ==
-			file_names.end()) {
-		file_names.push_back(ref_name);
-	}
+	auto file_names = std::vector<std::string>();
+	file_names.reserve(
+		std::max(reference_names.size(), extra_file_names.size()));
+
+	std::set_union(reference_names.begin(), reference_names.end(),
+				   extra_file_names.begin(), extra_file_names.end(),
+				   std::back_inserter(file_names));
 
 	if (file_names.size() < 2) {
 		if (!isatty(STDIN_FILENO)) {
@@ -148,36 +154,46 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	/*
+	if (reference_names.empty()) {
+		// pick longest genome
+		auto longest_genome_it = max_element(
+			begin(genomes), end(genomes), [](const genome &a, const genome &b) {
+				return a.get_length() < b.get_length();
+			});
+
+
+		auto ref_file_name_it =
+			std::find(file_names.begin(), file_names.end(), ref_name);
+	}*/
+
 	// at max `file_names` many files have to be read.
 	auto genomes = std::vector<genome>();
+	auto queries = std::vector<sequence>();
 	genomes.reserve(file_names.size());
+	queries.reserve(genomes.size());
 
 	// read all genomes
 	std::transform(file_names.begin(), file_names.end(),
 				   std::back_inserter(genomes), read_genome);
+	std::transform(genomes.begin(), genomes.end(), std::back_inserter(queries),
+				   join);
 
-	auto longest_genome_it = max_element(begin(genomes), end(genomes),
-						  [](const genome &a, const genome &b) {
-							  return a.get_length() < b.get_length();
-						  });
-	auto ref_file_name_it = std::find(file_names.begin(), file_names.end(), ref_name);
-	const auto &ref = (ref_name == "longest")
-						  ? *longest_genome_it
-						  : *(ref_file_name_it - file_names.begin() + genomes.begin());
-
-	if (genomes.size() < 2 ) {
+	if (genomes.size() < 2) {
 		errx(1, "Less than two genomes given, nothing to compare.");
 	}
 
-	auto queries = std::vector<sequence>();
-	auto inserter = std::back_inserter(queries);
-	queries.reserve(genomes.size());
-	std::transform(std::begin(genomes), std::end(genomes), inserter, join);
+	auto references = std::vector<std::reference_wrapper<sequence>>();
+	for (auto ref_name: reference_names) {
+		auto it = std::find(file_names.begin(), file_names.end(), ref_name);
+		auto index = it - file_names.begin();
+		references.push_back(queries[index]);
+	}
 
-	auto subject = join(ref);
-	genomes.clear();
-
-	process(subject, queries);
+	for (auto subject : references) {
+		auto matrix = process(subject, queries);
+		print_matrix(subject, queries, matrix);
+	}
 
 	return 0;
 }
@@ -192,8 +208,7 @@ void usage(int status)
 		"\tFILES... can be any sequence of FASTA files.\n"
 		"\tUse '-' to force reading from standard input.\n\n"
 		"Options:\n"
-		"  -r longest|FILENAME   Use the sequence from FILENAME as reference;"
-		"default: longest\n"
+		"  -r FILE           Add FILE to the list of references\n"
 		"  -v, --verbose     Prints additional information\n"
 #ifdef _OPENMP
 		"  -t, --threads <INT> \n"

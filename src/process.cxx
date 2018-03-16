@@ -4,8 +4,6 @@
 #include <chrono>
 #include <cmath>
 #include <cstring>
-#include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -399,7 +397,8 @@ void filter_overlaps_max(std::vector<homology> &pile)
 /**
  *
  */
-void process(const sequence &subject, const std::vector<sequence> &queries)
+std::vector<evo_model> process(const sequence &subject,
+							   const std::vector<sequence> &queries)
 {
 
 	auto N = queries.size();
@@ -454,34 +453,7 @@ void process(const sequence &subject, const std::vector<sequence> &queries)
 		}
 	}
 
-	auto dist_matrix = std::vector<double>(N * N, NAN);
-	std::transform(std::begin(matrix), std::end(matrix),
-				   std::begin(dist_matrix),
-				   [](const evo_model &em) { return em.estimate_JC(); });
-
-	std::cout << N << std::endl;
-	for (size_t i = 0; i < N; i++) {
-		std::cout << queries[i].get_name();
-		for (size_t j = 0; j < N; j++) {
-			std::cout << "  " << std::setw(8) << std::setprecision(4)
-					  << (i == j ? 0.0 : dist_matrix[i * N + j]);
-		}
-		std::cout << std::endl;
-	}
-
-	if (FLAGS & flags::verbose) {
-		auto covf = std::ofstream(subject.get_name() + ".abscov");
-		covf << "Absolute Coverages:\n";
-		for (size_t i = 0; i < N; i++) {
-			for (size_t j = 0; j < N; j++) {
-				// TODO: queries[j].get_length() wrong length!
-				covf << std::setw(8) << std::setprecision(4)
-					 << M(i, j).total() /* / ((double)queries[j].size())*/
-					 << "  ";
-			}
-			covf << std::endl;
-		}
-	}
+	return matrix;
 }
 
 char complement(char c)

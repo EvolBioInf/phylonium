@@ -1,10 +1,9 @@
+#include "evo_model.h"
 #include <algorithm>
+#include <assert.h>
 #include <cmath>
 #include <iterator>
 #include <numeric>
-#include <assert.h>
-#include "evo_model.h"
-
 
 int evo_model::hash(char nucl) noexcept
 {
@@ -53,16 +52,16 @@ void evo_model::account(const char *sa, const char *sb, size_t length) noexcept
 
 constexpr bool is_complement(char c, char d)
 {
-	if (c == 'A') return d  == 'T';
-	if (c == 'C') return d  == 'G';
-	if (c == 'G') return d  == 'C';
-	if (c == 'T') return d  == 'A';
+	if (c == 'A') return d == 'T';
+	if (c == 'C') return d == 'G';
+	if (c == 'G') return d == 'C';
+	if (c == 'T') return d == 'A';
 	return false;
 	// return (~(c ^ d) & 2) && (c != d);
 }
 
 void evo_model::account_rev(const char *sa, const char *sb, size_t b_offset,
-				 size_t length) noexcept
+							size_t length) noexcept
 {
 	size_t mutations = 0;
 	for (size_t k = 0; k < length; k++) {
@@ -81,7 +80,7 @@ evo_model &evo_model::operator+=(const evo_model &other) noexcept
 		counts[i] += other.counts[i];
 	}
 
-	for (int i = MUTCOUNTS; i < sizeof(counts)/sizeof(counts[0]); i++)
+	for (int i = MUTCOUNTS; i < sizeof(counts) / sizeof(counts[0]); i++)
 		assert(counts[i] == 0);
 
 	return *this;

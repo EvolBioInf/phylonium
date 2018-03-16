@@ -122,7 +122,7 @@ double gc_content(const std::string &seq) noexcept
  */
 sequence join(const genome &gen)
 {
-	const auto& contigs = gen.get_contigs();
+	const auto &contigs = gen.get_contigs();
 
 	if (contigs.size() == 0) {
 		return sequence();

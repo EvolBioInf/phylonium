@@ -1,8 +1,10 @@
-#include <cinttypes>
+#pragma once
+
+#include <cstddef>
 
 class evo_model
 {
-protected:
+  protected:
 	enum {
 		AtoA,
 		AtoC,
@@ -23,19 +25,25 @@ protected:
 		TtoG = GtoT
 	};
 
-
 	int counts[16] = {0};
 
-public:
+  public:
 	static int hash(char c) noexcept;
 
 	evo_model() = default;
 
 	void account(char a, char b) noexcept;
 	void account(const char *stra, const char *strb, size_t length) noexcept;
-	void account_rev(const char *stra, const char *strb, size_t b_offset,  size_t length) noexcept;
+	void account_rev(const char *stra, const char *strb, size_t b_offset,
+					 size_t length) noexcept;
 	evo_model &operator+=(const evo_model &other) noexcept;
 	size_t total() const noexcept;
 	double estimate_raw() const noexcept;
 	double estimate_JC() const noexcept;
+
+	static const evo_model &select_by_total(const evo_model &self,
+											const evo_model &other)
+	{
+		return self.total() < other.total() ? other : self;
+	}
 };
