@@ -356,9 +356,18 @@ lcp_interval esa::get_interval(lcp_interval ij, char a) const
 	SoSueMe:
 		if (c == a) {
 			/* found ! */
-			saidx_t n = left_child(m);
 
-			ij = (lcp_interval){.l = LCP[n], .i = i, .j = m - 1, .m = n};
+			if (i != m - 1) {
+				// found interval contains >1 element
+				saidx_t n = left_child(m);
+
+				ij = (lcp_interval){.l = LCP[n], .i = i, .j = m - 1, .m = n};
+			} else {
+				// empty or singleton
+				// doing left_child(m) is not valid in this case!
+				ij = (lcp_interval){.l = LCP[i], .i = i, .j = i, .m = -1};
+			}
+
 
 			return ij;
 		}
