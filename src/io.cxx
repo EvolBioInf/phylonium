@@ -6,6 +6,7 @@
 #include "io.h"
 #include <algorithm>
 #include <err.h>
+#include <cmath>
 #include <fcntl.h>
 #include <fstream>
 #include <iomanip>
