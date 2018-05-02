@@ -67,8 +67,7 @@ class genome
 	genome() = default;
 
 	genome(std::string _name, std::vector<sequence> _contigs) noexcept
-		: name{std::move(_name)},
-		  contigs{std::move(_contigs)}
+		: name{std::move(_name)}, contigs{std::move(_contigs)}
 	{
 		joined_length = std::accumulate(
 			begin(contigs), end(contigs), contigs.size() - 1,

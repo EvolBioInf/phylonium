@@ -46,8 +46,8 @@ class matrix
 	 * @returns the new matrix
 	 */
 	matrix(std::vector<std::string> _names, std::vector<double> _values)
-		: size{_names.size()}, names{std::move(_names)},
-		  values{std::move(_values)}
+		: size{_names.size()}, names{std::move(_names)}, values{
+															 std::move(_values)}
 	{
 		assert(size == names.size());
 		assert(size * size == values.size());

@@ -5,8 +5,8 @@
 
 #include "io.h"
 #include <algorithm>
-#include <err.h>
 #include <cmath>
+#include <err.h>
 #include <fcntl.h>
 #include <fstream>
 #include <iomanip>
@@ -90,13 +90,33 @@ genome read_genome(std::string file_name)
 	return genome{species, read_fasta(file_name, "")};
 }
 
+void print_matrix(const std::vector<sequence> &queries,
+				  const std::vector<evo_model> &matrix)
+{
+	auto N = queries.size();
+
+	auto dist_matrix = std::vector<double>(N * N, NAN);
+	std::transform(std::begin(matrix), std::end(matrix),
+				   std::begin(dist_matrix),
+				   [](const evo_model &em) { return em.estimate_JC(); });
+
+	std::cout << N << std::endl;
+	for (size_t i = 0; i < N; i++) {
+		std::cout << queries[i].get_name();
+		for (size_t j = 0; j < N; j++) {
+			std::cout << "  " << std::setw(8) << std::setprecision(4)
+					  << (i == j ? 0.0 : dist_matrix[i * N + j]);
+		}
+		std::cout << std::endl;
+	}
+}
+
 void print_matrix(const sequence &subject, const std::vector<sequence> &queries,
 				  const std::vector<evo_model> &matrix)
 {
 	auto N = queries.size();
 
-	auto M = [&matrix, N = N ](size_t i, size_t j)->const evo_model &
-	{
+	auto M = [&matrix, N = N](size_t i, size_t j) -> const evo_model & {
 		return matrix[i * N + j];
 	};
 

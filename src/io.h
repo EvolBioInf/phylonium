@@ -14,4 +14,7 @@ genome read_genome(std::string);
 void print_matrix(const sequence &subject, const std::vector<sequence> &queries,
 				  const std::vector<evo_model> &matrix);
 
+void print_matrix(const std::vector<sequence> &queries,
+				  const std::vector<evo_model> &matrix);
+
 #endif // _IO_H_

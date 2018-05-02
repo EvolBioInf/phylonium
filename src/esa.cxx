@@ -368,7 +368,6 @@ lcp_interval esa::get_interval(lcp_interval ij, char a) const
 				ij = (lcp_interval){.l = LCP[i], .i = i, .j = i, .m = -1};
 			}
 
-
 			return ij;
 		}
 

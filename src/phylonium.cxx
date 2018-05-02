@@ -23,10 +23,10 @@
  */
 
 #include <algorithm>
+#include <functional>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <functional>
 
 #include <err.h>
 #include <errno.h>
@@ -135,6 +135,10 @@ int main(int argc, char *argv[])
 	// add missing reference names to file names
 	std::sort(reference_names.begin(), reference_names.end());
 	std::sort(extra_file_names.begin(), extra_file_names.end());
+	auto split = std::unique(reference_names.begin(), reference_names.end());
+	reference_names.erase(split, reference_names.end());
+	split = std::unique(extra_file_names.begin(), extra_file_names.end());
+	extra_file_names.erase(split, extra_file_names.end());
 
 	auto file_names = std::vector<std::string>();
 	file_names.reserve(
@@ -143,6 +147,8 @@ int main(int argc, char *argv[])
 	std::set_union(reference_names.begin(), reference_names.end(),
 				   extra_file_names.begin(), extra_file_names.end(),
 				   std::back_inserter(file_names));
+	split = std::unique(file_names.begin(), file_names.end());
+	file_names.erase(split, file_names.end());
 
 	if (file_names.size() < 2) {
 		if (!isatty(STDIN_FILENO)) {
@@ -152,6 +158,10 @@ int main(int argc, char *argv[])
 			// print a helpful message on './phylonium' without args
 			usage(EXIT_FAILURE);
 		}
+	}
+
+	if (reference_names.empty()) {
+		errx(1, "no reference given.");
 	}
 
 	/*
@@ -184,16 +194,36 @@ int main(int argc, char *argv[])
 	}
 
 	auto references = std::vector<std::reference_wrapper<sequence>>();
-	for (auto ref_name: reference_names) {
+	for (auto ref_name : reference_names) {
 		auto it = std::find(file_names.begin(), file_names.end(), ref_name);
 		auto index = it - file_names.begin();
 		references.push_back(queries[index]);
 	}
 
+	using mat_type = std::vector<evo_model>;
+	auto matrices = std::vector<mat_type>();
+
 	for (auto subject : references) {
 		auto matrix = process(subject, queries);
-		print_matrix(subject, queries, matrix);
+		matrices.push_back(matrix);
+		// print_matrix(subject, queries, matrix);
 	}
+
+	auto super_matrix = mat_type(matrices[0].size());
+
+	for (const auto &matrix : matrices) {
+		// for (ssize_t i = 0; i < matrix.size(); i++) {
+		// 	super_matrix[i] =
+		// 		evo_model::select_by_total(super_matrix[i], matrix[i]);
+		// }
+
+		for (ssize_t i = 0; i < matrix.size(); i++) {
+			super_matrix[i] =
+				evo_model::select_by_total(super_matrix[i], matrix[i]);
+		}
+	}
+
+	print_matrix(queries, super_matrix);
 
 	return 0;
 }

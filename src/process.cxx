@@ -147,11 +147,8 @@ class homology
 
 	homology() = default;
 	homology(size_t ir, size_t iq, size_t l = 0) noexcept
-		: direction{dir::forward},
-		  index_reference{ir},
-		  index_reference_projected{ir},
-		  index_query{iq},
-		  length{l}
+		: direction{dir::forward}, index_reference{ir},
+		  index_reference_projected{ir}, index_query{iq}, length{l}
 	{
 	}
 
@@ -439,8 +436,7 @@ std::vector<evo_model> process(const sequence &subject,
 	}
 
 	auto matrix = std::vector<evo_model>(N * N);
-	auto M = [&matrix, N = N ](size_t i, size_t j)->evo_model &
-	{
+	auto M = [&matrix, N = N](size_t i, size_t j) -> evo_model & {
 		return matrix[i * N + j];
 	};
 
