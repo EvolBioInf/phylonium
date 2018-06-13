@@ -94,7 +94,7 @@ size_t evo_model::total() const noexcept
 double evo_model::estimate_raw() const noexcept
 {
 	size_t nucl = total();
-	if (nucl == 0) return NAN;
+	if (nucl == 0) return 0;
 	size_t SNPs = 0;
 
 	SNPs += counts[AtoC];

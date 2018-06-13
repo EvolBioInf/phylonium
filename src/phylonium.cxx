@@ -51,16 +51,26 @@ double RANDOM_ANCHOR_PROP = 0.025;
 void usage(int);
 void version(void);
 
+std::vector<std::reference_wrapper<sequence>>
+pick_second_pass(std::vector<sequence> &sequences,
+				 const std::vector<evo_model> &matrix);
+std::vector<std::reference_wrapper<sequence>>
+pick_first_pass(std::vector<sequence> &sequences);
+void cleanup_names(std::vector<std::string> &reference_names,
+				   std::vector<std::string> &file_names);
+
 int main(int argc, char *argv[])
 {
 	int version_flag = 0;
+	bool two_pass = false;
 	auto reference_names = std::vector<std::string>();
 
 	static struct option long_options[] = {
-		{"version", no_argument, &version_flag, 1},
+		{"2pass", no_argument, NULL, '2'},
 		{"help", no_argument, NULL, 'h'},
-		{"verbose", no_argument, NULL, 'v'},
 		{"threads", required_argument, NULL, 't'},
+		{"verbose", no_argument, NULL, 'v'},
+		{"version", no_argument, &version_flag, 1},
 		{0, 0, 0, 0}};
 
 #ifdef _OPENMP
@@ -70,7 +80,7 @@ int main(int argc, char *argv[])
 
 	// parse arguments
 	while (1) {
-		int c = getopt_long(argc, argv, "hr:t:v", long_options, NULL);
+		int c = getopt_long(argc, argv, "2hr:t:v", long_options, NULL);
 
 		if (c == -1) {
 			break;
@@ -78,6 +88,10 @@ int main(int argc, char *argv[])
 
 		switch (c) {
 			case 0: break;
+			case '2': {
+				two_pass = true;
+				break;
+			}
 			case 'h': usage(EXIT_SUCCESS); break;
 			case 'r': {
 				reference_names.push_back(optarg);
@@ -130,25 +144,10 @@ int main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	auto extra_file_names = std::vector<std::string>(argv, argv + argc);
+	auto file_names = std::vector<std::string>(argv, argv + argc);
 
 	// add missing reference names to file names
-	std::sort(reference_names.begin(), reference_names.end());
-	std::sort(extra_file_names.begin(), extra_file_names.end());
-	auto split = std::unique(reference_names.begin(), reference_names.end());
-	reference_names.erase(split, reference_names.end());
-	split = std::unique(extra_file_names.begin(), extra_file_names.end());
-	extra_file_names.erase(split, extra_file_names.end());
-
-	auto file_names = std::vector<std::string>();
-	file_names.reserve(
-		std::max(reference_names.size(), extra_file_names.size()));
-
-	std::set_union(reference_names.begin(), reference_names.end(),
-				   extra_file_names.begin(), extra_file_names.end(),
-				   std::back_inserter(file_names));
-	split = std::unique(file_names.begin(), file_names.end());
-	file_names.erase(split, file_names.end());
+	cleanup_names(reference_names, file_names);
 
 	if (file_names.size() < 2) {
 		if (!isatty(STDIN_FILENO)) {
@@ -159,23 +158,6 @@ int main(int argc, char *argv[])
 			usage(EXIT_FAILURE);
 		}
 	}
-
-	if (reference_names.empty()) {
-		errx(1, "no reference given.");
-	}
-
-	/*
-	if (reference_names.empty()) {
-		// pick longest genome
-		auto longest_genome_it = max_element(
-			begin(genomes), end(genomes), [](const genome &a, const genome &b) {
-				return a.get_length() < b.get_length();
-			});
-
-
-		auto ref_file_name_it =
-			std::find(file_names.begin(), file_names.end(), ref_name);
-	}*/
 
 	// at max `file_names` many files have to be read.
 	auto genomes = std::vector<genome>();
@@ -194,16 +176,20 @@ int main(int argc, char *argv[])
 	}
 
 	auto references = std::vector<std::reference_wrapper<sequence>>();
-	for (auto ref_name : reference_names) {
-		auto it = std::find(file_names.begin(), file_names.end(), ref_name);
-		auto index = it - file_names.begin();
-		references.push_back(queries[index]);
+	if (reference_names.empty()) {
+		references = pick_first_pass(queries);
+	} else {
+		for (auto ref_name : reference_names) {
+			auto it = std::find(file_names.begin(), file_names.end(), ref_name);
+			auto index = it - file_names.begin();
+			references.push_back(queries[index]);
+		}
 	}
 
 	using mat_type = std::vector<evo_model>;
 	auto matrices = std::vector<mat_type>();
 
-	for (auto subject : references) {
+	for (const auto &subject : references) {
 		auto matrix = process(subject, queries);
 		matrices.push_back(matrix);
 		// print_matrix(subject, queries, matrix);
@@ -212,20 +198,152 @@ int main(int argc, char *argv[])
 	auto super_matrix = mat_type(matrices[0].size());
 
 	for (const auto &matrix : matrices) {
-		// for (ssize_t i = 0; i < matrix.size(); i++) {
-		// 	super_matrix[i] =
-		// 		evo_model::select_by_total(super_matrix[i], matrix[i]);
-		// }
-
 		for (ssize_t i = 0; i < matrix.size(); i++) {
 			super_matrix[i] =
 				evo_model::select_by_total(super_matrix[i], matrix[i]);
 		}
 	}
 
-	print_matrix(queries, super_matrix);
+	if (two_pass) {
+		auto references = pick_second_pass(queries, super_matrix);
+
+		auto new_matrices = std::vector<mat_type>();
+
+		for (const auto &subject : references) {
+			auto matrix = process(subject, queries);
+			new_matrices.push_back(matrix);
+		}
+
+		// copy last pass
+		// std::copy(matrices.begin(), matrices.end(), std::back_inserter(new_matrices));
+
+		auto new_super_matrix = mat_type(new_matrices[0].size());
+
+		for (const auto &matrix : new_matrices) {
+			for (ssize_t i = 0; i < matrix.size(); i++) {
+				new_super_matrix[i] =
+					evo_model::select_by_total(new_super_matrix[i], matrix[i]);
+			}
+		}
+
+		print_matrix(queries, new_super_matrix);
+	} else {
+		print_matrix(queries, super_matrix);
+	}
 
 	return 0;
+}
+
+std::vector<std::reference_wrapper<sequence>>
+pick_second_pass(std::vector<sequence> &sequences,
+				 const std::vector<evo_model> &matrix)
+{
+	auto ret = std::vector<std::reference_wrapper<sequence>>();
+
+	auto rows = std::vector<double>();
+	rows.reserve(sequences.size());
+
+	auto size = sequences.size();
+
+	auto central_value = 1111111.0;//fixme
+	auto central_index = (size_t)0;
+	for (size_t i = 0; i < size; i++) {
+		auto sum = std::accumulate(matrix.begin() + i * size,
+								   matrix.begin() + i * size + size, 0.0,
+								   [](double s, const evo_model &e) {
+									   return s + e.estimate_JC(); //
+								   });
+
+		if (sum < central_value) {
+			central_value = sum;
+			central_index = i;
+		}
+	}
+	ret.push_back(sequences[central_index]);
+
+	// auto outgroup_value = 0.0;
+	// auto outgroup_index = (size_t)0;
+	// for (size_t i = 0; i < size; i++) {
+	// 	auto sum = std::accumulate(matrix.begin() + i * size,
+	// 							   matrix.begin() + i * size + size, 0.0,
+	// 							   [](double s, const evo_model &e) {
+	// 								   return s + e.estimate_JC(); //
+	// 							   });
+
+	// 	if (sum > outgroup_value) {
+	// 		outgroup_value = sum;
+	// 		outgroup_index = i;
+	// 	}
+	// }
+
+	// auto ingroup_value = 0.0;
+	// auto ingroup_index = (size_t)0;
+	// for (size_t i = 0; i < size; i++) {
+	// 	if (i == outgroup_index) continue;
+
+	// 	auto val = matrix[outgroup_index * size + i].estimate_JC();
+	// 	if (val > ingroup_value) {
+	// 		ingroup_value = val;
+	// 		ingroup_index = i;
+	// 	}
+	// }
+	// ret.push_back(sequences[ingroup_index]);
+
+
+
+	return ret;
+}
+
+std::vector<std::reference_wrapper<sequence>>
+pick_first_pass(std::vector<sequence> &sequences)
+{
+	auto ret = std::vector<std::reference_wrapper<sequence>>();
+
+	// pick a reference by some criterion.
+	for (auto &seq : sequences) {
+		ret.push_back(seq);
+	}
+
+	std::nth_element(ret.begin(), ret.begin() + ret.size() / 2, ret.end(),
+					 [](const sequence &a, const sequence &b) {
+						 return a.size() < b.size();
+					 });
+	std::swap(ret[0], ret[ret.size() / 2]);
+	ret.erase(ret.begin() + 1, ret.end());
+
+	std::cerr << "chosen reference: " << ret[0].get().get_name() << std::endl;
+
+	return ret;
+}
+
+void cleanup_names(std::vector<std::string> &reference_names,
+				   std::vector<std::string> &file_names)
+{
+	std::sort(reference_names.begin(), reference_names.end());
+	std::sort(file_names.begin(), file_names.end());
+
+	// remove doubles
+	auto split = std::unique(reference_names.begin(), reference_names.end());
+	reference_names.erase(split, reference_names.end());
+
+	// remove doubles
+	split = std::unique(file_names.begin(), file_names.end());
+	file_names.erase(split, file_names.end());
+
+	auto all_names = std::vector<std::string>();
+	all_names.reserve(std::max(reference_names.size(), file_names.size()));
+
+	// merge int all_names
+	std::set_union(reference_names.begin(), reference_names.end(),
+				   file_names.begin(), file_names.end(),
+				   std::back_inserter(all_names));
+
+	// remove doubles
+	split = std::unique(all_names.begin(), all_names.end());
+	all_names.erase(split, all_names.end());
+
+	// output
+	file_names.swap(all_names);
 }
 
 /** @brief
