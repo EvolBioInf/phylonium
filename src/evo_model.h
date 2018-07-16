@@ -1,6 +1,14 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
+#include <gsl/gsl_randist.h>
+#include <gsl/gsl_rng.h>
+#include <iterator>
+#include <array>
+
+
+extern gsl_rng *RNG;
 
 class evo_model
 {
@@ -25,7 +33,7 @@ class evo_model
 		TtoG = GtoT
 	};
 
-	int counts[16] = {0};
+	std::array<int,MUTCOUNTS> counts = {{0}};
 
   public:
 	static int hash(char c) noexcept;
@@ -46,4 +54,6 @@ class evo_model
 	{
 		return self.total() < other.total() ? other : self;
 	}
+
+	evo_model bootstrap() const;
 };

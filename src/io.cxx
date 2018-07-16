@@ -90,11 +90,11 @@ genome read_genome(std::string file_name)
 	return genome{species, read_fasta(file_name, "")};
 }
 
-void print_matrix(const std::vector<sequence> &queries,
-				  const std::vector<evo_model> &matrix)
+void just_print(const std::vector<std::string> &names,
+				const std::vector<evo_model> &matrix)
 {
-	auto N = queries.size();
 
+	auto N = names.size();
 	auto dist_matrix = std::vector<double>(N * N, NAN);
 	std::transform(std::begin(matrix), std::end(matrix),
 				   std::begin(dist_matrix),
@@ -102,7 +102,7 @@ void print_matrix(const std::vector<sequence> &queries,
 
 	std::cout << N << std::endl;
 	for (size_t i = 0; i < N; i++) {
-		std::cout << queries[i].get_name();
+		std::cout << names[i];
 		for (size_t j = 0; j < N; j++) {
 			std::cout << "  " << std::setw(8) << std::setprecision(4)
 					  << (i == j ? 0.0 : dist_matrix[i * N + j]);
@@ -111,31 +111,37 @@ void print_matrix(const std::vector<sequence> &queries,
 	}
 }
 
+void print_matrix(const std::vector<sequence> &queries,
+				  const std::vector<evo_model> &matrix)
+{
+	auto N = queries.size();
+	auto names = std::vector<std::string>(N);
+	std::transform(std::begin(queries), std::end(queries), std::begin(names),
+				   [&](const sequence &seq) { return seq.get_name(); });
+
+	just_print(names, matrix);
+	if (BOOTSTRAP) {
+		auto neu = std::vector<evo_model>(N * N);
+		for (auto k = 0; k < BOOTSTRAP; k++) {
+			std::transform(std::begin(matrix), std::end(matrix),
+						   std::begin(neu),
+						   [](const evo_model &em) { return em.bootstrap(); });
+			just_print(names, neu);
+		}
+	}
+}
+
 void print_matrix(const sequence &subject, const std::vector<sequence> &queries,
 				  const std::vector<evo_model> &matrix)
 {
 	auto N = queries.size();
 
-	auto M = [&matrix, N = N](size_t i, size_t j) -> const evo_model & {
-		return matrix[i * N + j];
-	};
-
-	auto dist_matrix = std::vector<double>(N * N, NAN);
-	std::transform(std::begin(matrix), std::end(matrix),
-				   std::begin(dist_matrix),
-				   [](const evo_model &em) { return em.estimate_JC(); });
-
-	std::cout << N << std::endl;
-	for (size_t i = 0; i < N; i++) {
-		std::cout << queries[i].get_name();
-		for (size_t j = 0; j < N; j++) {
-			std::cout << "  " << std::setw(8) << std::setprecision(4)
-					  << (i == j ? 0.0 : dist_matrix[i * N + j]);
-		}
-		std::cout << std::endl;
-	}
+	print_matrix(queries, matrix);
 
 	if (FLAGS & flags::verbose) {
+		auto M = [&matrix, N = N](size_t i, size_t j) -> const evo_model & {
+			return matrix[i * N + j];
+		};
 		auto covf = std::ofstream(subject.get_name() + ".abscov");
 		covf << "Absolute Coverages:\n";
 		for (size_t i = 0; i < N; i++) {

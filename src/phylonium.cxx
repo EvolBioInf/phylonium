@@ -23,16 +23,16 @@
  */
 
 #include <algorithm>
-#include <functional>
-#include <iostream>
-#include <string>
-#include <vector>
-
 #include <err.h>
 #include <errno.h>
+#include <functional>
 #include <getopt.h>
+#include <gsl/gsl_rng.h>
+#include <iostream>
 #include <string.h>
+#include <string>
 #include <unistd.h>
+#include <vector>
 
 #include "config.h"
 #include "global.h"
@@ -44,9 +44,11 @@
 #include <omp.h>
 #endif
 
+extern gsl_rng *RNG;
+double RANDOM_ANCHOR_PROP = 0.025;
 int FLAGS = flags::none;
 int THREADS = 1;
-double RANDOM_ANCHOR_PROP = 0.025;
+long unsigned int BOOTSTRAP = 0;
 
 void usage(int);
 void version(void);
@@ -61,12 +63,22 @@ void cleanup_names(std::vector<std::string> &reference_names,
 
 int main(int argc, char *argv[])
 {
+	RNG = gsl_rng_alloc(gsl_rng_default);
+	if (!RNG) {
+		err(1, "RNG allocation failed.");
+	}
+
+	// seed the random number generator with the current time
+	// TODO: enable seeding for reproducibility
+	gsl_rng_set(RNG, time(NULL));
+
 	int version_flag = 0;
 	bool two_pass = false;
 	auto reference_names = std::vector<std::string>();
 
 	static struct option long_options[] = {
 		{"2pass", no_argument, NULL, '2'},
+		{"bootstrap", required_argument, NULL, 'b'},
 		{"help", no_argument, NULL, 'h'},
 		{"threads", required_argument, NULL, 't'},
 		{"verbose", no_argument, NULL, 'v'},
@@ -80,7 +92,7 @@ int main(int argc, char *argv[])
 
 	// parse arguments
 	while (1) {
-		int c = getopt_long(argc, argv, "2hr:t:v", long_options, NULL);
+		int c = getopt_long(argc, argv, "2b:hr:t:v", long_options, NULL);
 
 		if (c == -1) {
 			break;
@@ -90,6 +102,22 @@ int main(int argc, char *argv[])
 			case 0: break;
 			case '2': {
 				two_pass = true;
+				break;
+			}
+			case 'b': {
+				errno = 0;
+				char *end;
+				long unsigned int bootstrap = strtoul(optarg, &end, 10);
+
+				if (errno || end == optarg || *end != '\0' || bootstrap == 0) {
+					warnx(
+						"Expected a positive number for -b argument, but '%s' "
+						"was given. Ignoring -b argument.",
+						optarg);
+					break;
+				}
+
+				BOOTSTRAP = bootstrap - 1;
 				break;
 			}
 			case 'h': usage(EXIT_SUCCESS); break;
@@ -215,7 +243,8 @@ int main(int argc, char *argv[])
 		}
 
 		// copy last pass
-		// std::copy(matrices.begin(), matrices.end(), std::back_inserter(new_matrices));
+		// std::copy(matrices.begin(), matrices.end(),
+		// std::back_inserter(new_matrices));
 
 		auto new_super_matrix = mat_type(new_matrices[0].size());
 
@@ -245,7 +274,7 @@ pick_second_pass(std::vector<sequence> &sequences,
 
 	auto size = sequences.size();
 
-	auto central_value = 1111111.0;//fixme
+	auto central_value = 1111111.0; // fixme
 	auto central_index = (size_t)0;
 	for (size_t i = 0; i < size; i++) {
 		auto sum = std::accumulate(matrix.begin() + i * size,
@@ -288,8 +317,6 @@ pick_second_pass(std::vector<sequence> &sequences,
 	// 	}
 	// }
 	// ret.push_back(sequences[ingroup_index]);
-
-
 
 	return ret;
 }

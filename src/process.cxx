@@ -423,7 +423,7 @@ std::vector<evo_model> process(const sequence &subject,
 
 		filter_overlaps_max(hvlocal);
 
-		#pragma omp critical
+#pragma omp critical
 		homologies[j] = std::move(hvlocal);
 	}
 

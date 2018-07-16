@@ -4,6 +4,9 @@
 #include <cmath>
 #include <iterator>
 #include <numeric>
+#include <iostream>
+
+gsl_rng *RNG;
 
 int evo_model::hash(char nucl) noexcept
 {
@@ -88,7 +91,7 @@ evo_model &evo_model::operator+=(const evo_model &other) noexcept
 
 size_t evo_model::total() const noexcept
 {
-	return std::accumulate(std::begin(counts), std::end(counts), 0);
+	return std::accumulate(std::begin(counts), std::begin(counts) + MUTCOUNTS, 0);
 }
 
 double evo_model::estimate_raw() const noexcept
@@ -114,4 +117,21 @@ double evo_model::estimate_JC() const noexcept
 
 	// fix negative zero
 	return dist <= 0.0 ? 0.0 : dist;
+}
+
+evo_model evo_model::bootstrap() const
+{
+	using std::begin;
+	using std::end;
+	auto ret = *this;
+
+	size_t nucl = total();
+
+	std::array<double, MUTCOUNTS> p;
+	std::transform(begin(counts), end(counts), begin(p),
+				   [=](int count) { return count / (double)nucl; });
+
+	gsl_ran_multinomial(RNG, MUTCOUNTS, nucl, p.data(), reinterpret_cast<unsigned int*>(ret.counts.data()));
+
+	return ret;
 }
