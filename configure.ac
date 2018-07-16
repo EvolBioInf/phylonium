@@ -58,6 +58,7 @@ AC_CONFIG_HEADERS([config.h:config.hin])
 AC_CONFIG_FILES([
  libs/Makefile
  Makefile
+ man/phylonium.1
  src/Makefile
 ])
 AC_OUTPUT

@@ -1,0 +1,47 @@
+.TH PHYLONIUM "1" "2018-07-16" "@VERSION@" "phylonium manual"
+.SH NAME
+phylonium \- rapidly estimate evolutionary distance
+.SH SYNOPSIS
+.B phylonium
+[\fIOPTIONS...\fR] \fIFILES\fR...
+.SH DESCRIPTION
+.TP
+\fBphylonium\fR estimates the evolutionary distance between closely related genomes. For this \fBphylonium\fR reads the input sequences from \fIFASTA\fR files and computes the pairwise evolutionary distance. All sequences in one file are considered to be contigs of the same genome.
+.SH OUTPUT
+The output is a symmetrical distance matrix in \fIPHYLIP\fR format, with each entry representing divergence with a positive, real number. A distance of zero means that two sequences are identical, whereas other values are estimates for the nucleotide substitution rate (Jukes-Cantor corrected). For technical reasons the comparison might fail and no estimate can be computed. In such cases \fInan\fR is printed. This either means that the input sequences were too short (<200bp) or too diverse (K>0.5) for our method to work properly.
+.SH OPTIONS
+.TP
+\fB\-b\fR \fIINT\fR, \fB\-\-bootstrap\fR=\fIINT\fR
+Compute multiple distance matrices, with \fIn-1\fR bootstrapped from the first. See the paper Klötzl & Haubold (2016) for a detailed explanation.
+.TP
+\fB\-t\fR \fIINT\fR, \fB\-\-threads\fR=\fIINT\fR
+The number of threads to be used; by default, all available processors are used.
+.br
+Multithreading is only available if \fBphylonium\fR was compiled with OpenMP support.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Prints additional information, including the amount of found homology. Apply multiple times for extra verboseness.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Prints the synopsis and an explanation of available options.
+.TP
+\fB\-\-version\fR
+Outputs version information and acknowledgments.
+.SH COPYRIGHT
+Copyright \(co 2017 - 2018 Fabian Klötzl
+License GPLv3+: GNU GPL version 3 or later.
+.br
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+The full license text is available at <http://gnu.org/licenses/gpl.html>.
+.PP
+.SH ACKNOWLEDGMENTS
+1) Algorithms: Ohlebusch, E. (2013). Bioinformatics Algorithms. Sequence Analysis, Genome Rearrangements, and Phylogenetic Reconstruction. pp 118f.
+.br
+2) SA construction: Mori, Y. (2005). Short description of improved two\-stage suffix sorting algorithm. http://homepage3.nifty.com/wpage/software/itssort.txt
+.br
+3) Bootstrapping: Klötzl, F. and Haubold, B. (2016). Support Values for Genome Phylogenies
+.SH BUGS
+.SS Reporting Bugs
+Please report bugs to <kloetzl@evolbio.mpg.de>.
+.SS
