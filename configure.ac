@@ -60,6 +60,7 @@ AC_CONFIG_FILES([
  Makefile
  man/phylonium.1
  src/Makefile
+ test/Makefile
 ])
 AC_OUTPUT
 
