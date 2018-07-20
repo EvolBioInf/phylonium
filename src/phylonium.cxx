@@ -196,12 +196,17 @@ int main(int argc, char *argv[])
 	// read all genomes
 	std::transform(file_names.begin(), file_names.end(),
 				   std::back_inserter(genomes), read_genome);
+	// TODO: Can we make the transform "consume" the genome so the memory gets freed?
 	std::transform(genomes.begin(), genomes.end(), std::back_inserter(queries),
 				   join);
 
 	if (genomes.size() < 2) {
 		errx(1, "Less than two genomes given, nothing to compare.");
 	}
+
+	// at this point we no longer need the split genomes, so let's free some memory.
+	genomes.clear();
+	genomes.shrink_to_fit();
 
 	auto references = std::vector<std::reference_wrapper<sequence>>();
 	if (reference_names.empty()) {
