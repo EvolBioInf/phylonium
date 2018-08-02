@@ -188,25 +188,17 @@ int main(int argc, char *argv[])
 	}
 
 	// at max `file_names` many files have to be read.
-	auto genomes = std::vector<genome>();
 	auto queries = std::vector<sequence>();
-	genomes.reserve(file_names.size());
-	queries.reserve(genomes.size());
+	queries.reserve(file_names.size());
 
 	// read all genomes
-	std::transform(file_names.begin(), file_names.end(),
-				   std::back_inserter(genomes), read_genome);
-	// TODO: Can we make the transform "consume" the genome so the memory gets freed?
-	std::transform(genomes.begin(), genomes.end(), std::back_inserter(queries),
-				   join);
+	std::transform(
+		file_names.begin(), file_names.end(), std::back_inserter(queries),
+		[](std::string file_name) { return join(read_genome(file_name)); });
 
-	if (genomes.size() < 2) {
+	if (queries.size() < 2) {
 		errx(1, "Less than two genomes given, nothing to compare.");
 	}
-
-	// at this point we no longer need the split genomes, so let's free some memory.
-	genomes.clear();
-	genomes.shrink_to_fit();
 
 	auto references = std::vector<std::reference_wrapper<sequence>>();
 	if (reference_names.empty()) {
