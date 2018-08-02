@@ -542,10 +542,8 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 						(common_start - hb.index_reference_projected);
 
 		// no need for double complement.
-		for (size_t i = 0; i < length; i++) {
-			count.account(sb.c_str()[b_offset - 1 - i],
-						  sa.c_str()[a_offset - 1 - i]);
-		}
+		count.account(sa.c_str() + a_offset - length,
+					  sb.c_str() + b_offset - length, length);
 	} else if (hb.direction == homology::dir::reverse) {
 		auto a_offset =
 			common_start - ha.index_reference_projected + ha.index_query;

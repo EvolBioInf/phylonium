@@ -55,12 +55,8 @@ void evo_model::account(const char *sa, const char *sb, size_t length) noexcept
 
 constexpr bool is_complement(char c, char d)
 {
-	if (c == 'A') return d == 'T';
-	if (c == 'C') return d == 'G';
-	if (c == 'G') return d == 'C';
-	if (c == 'T') return d == 'A';
-	return false;
-	// return (~(c ^ d) & 2) && (c != d);
+	auto xorr = c ^ d;
+	return xorr == 4 || xorr == 21;
 }
 
 void evo_model::account_rev(const char *sa, const char *sb, size_t b_offset,
