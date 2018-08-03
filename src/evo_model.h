@@ -1,39 +1,19 @@
 #pragma once
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
 #include <iterator>
-#include <array>
-
 
 extern gsl_rng *RNG;
 
 class evo_model
 {
   protected:
-	enum {
-		AtoA,
-		AtoC,
-		AtoG,
-		AtoT,
-		CtoC,
-		CtoG,
-		CtoT,
-		GtoG,
-		GtoT,
-		TtoT,
-		MUTCOUNTS,
-		CtoA = AtoC,
-		GtoA = AtoG,
-		GtoC = CtoG,
-		TtoA = AtoT,
-		TtoC = CtoT,
-		TtoG = GtoT
-	};
-
-	std::array<int,MUTCOUNTS> counts = {{0}};
+	size_t substitutions = 0;
+	size_t homologs = 0;
 
   public:
 	static int hash(char c) noexcept;
