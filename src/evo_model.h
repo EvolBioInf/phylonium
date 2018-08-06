@@ -9,15 +9,19 @@
 
 extern gsl_rng *RNG;
 
+/** @brief An "evolutionary model". Basically this class counts mutations. */
 class evo_model
 {
   protected:
+	/** Count of substitutions among homologous nucleotides. */
 	size_t substitutions = 0;
+	/** Number of homologous nucleotides. */
 	size_t homologs = 0;
 
   public:
 	static int hash(char c) noexcept;
 
+	/** @brief Reasonable default constructor. */
 	evo_model() = default;
 
 	void account(char a, char b) noexcept;
@@ -29,6 +33,11 @@ class evo_model
 	double estimate_raw() const noexcept;
 	double estimate_JC() const noexcept;
 
+	/** @brief Compare two counts of homologous nucleotides by length.
+	 * @param self - This count.
+	 * @param other - The count to compare to.
+	 * @returns the model with the larger count of homologous nucleotides.
+	 */
 	static const evo_model &select_by_total(const evo_model &self,
 											const evo_model &other)
 	{

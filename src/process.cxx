@@ -16,6 +16,13 @@ char complement(char c);
 
 double shuprop(size_t, double, size_t);
 
+/** @brief Find an element based on its index.
+ * @param first - Iterator tho the beginning of a range.
+ * @param last - Iterator to the end of a range.
+ * @param p - A predicate function return true or false depending on the index.
+ * @returns an iterator to the first element for which the predicate returns
+ * true, or last if none.
+ */
 template <class InputIt, class UnaryPredicate>
 InputIt find_if_i(InputIt first, InputIt last, UnaryPredicate p)
 {
@@ -28,6 +35,12 @@ InputIt find_if_i(InputIt first, InputIt last, UnaryPredicate p)
 	return last;
 }
 
+/** @brief Remove elements from a range using their index.
+ * @param first - Iterator to the beginning of a range.
+ * @param last - Iterator to the end of a range.
+ * @param p - A predicate function returning true for the indices to be removed.
+ * @returns The border at the end of the remaining elements.
+ */
 template <class ForwardIt, class UnaryPredicate>
 ForwardIt remove_if_i(ForwardIt first, ForwardIt last, UnaryPredicate p)
 {
@@ -109,7 +122,7 @@ size_t binomial_coefficient(size_t n, size_t k)
  * set. See Haubold et al. (2009).
  *
  * @param x - The maximum length of a shustring.
- * @param g - The the half of the relative amount of GC in the DNA.
+ * @param p - The the half of the relative amount of GC in the DNA.
  * @param l - The length of the subject.
  * @returns The probability of a certain shustring length.
  */
@@ -139,26 +152,40 @@ double shuprop(size_t x, double p, size_t l)
 class homology
 {
   public:
+	/** Store the direction of a match. */
 	enum class dir { forward, reverse } direction = dir::forward;
+	/** The beginning on the reference genome. */
 	size_t index_reference = 0;
+	/** The beginning on the forward strand of the reference genome. */
 	size_t index_reference_projected = 0;
+	/** The beginning on the query genome. */
 	size_t index_query = 0;
+	/** The length of the homologous region. */
 	size_t length = 0;
 
+	/** @brief Reasonable default constructor. */
 	homology() = default;
+
+	/** @brief Create a new homology from coordinates. */
 	homology(size_t ir, size_t iq, size_t l = 0) noexcept
 		: direction{dir::forward}, index_reference{ir},
 		  index_reference_projected{ir}, index_query{iq}, length{l}
 	{
 	}
 
+	/** @brief Extend the current homologous region to the right.
+	 * @param stride - amount of elongation.
+	 * @returns the new length.
+	 */
 	auto extend(size_t stride) noexcept
 	{
 		return length += stride;
 	}
 
 	/** @brief Transform coordinates, if necessary.
-	 *
+	 * If the homology is within the reverse region of the reference project the
+	 * coordinates onto the forward strand.
+	 * @param reference_length - The length of the reference.
 	 */
 	void reverseEh(size_t reference_length) noexcept
 	{
@@ -170,6 +197,10 @@ class homology
 		direction = dir::reverse;
 	}
 
+	/** @brief Check for overlap.
+	 * @param other - another homology.
+	 * @returns true iff this homology overlaps the argument.
+	 */
 	bool overlaps(const homology &other) const noexcept
 	{
 		if (index_reference_projected == other.index_reference_projected) {
@@ -183,11 +214,21 @@ class homology
 		return false;
 	}
 
+	/** @brief Determine the order of two homologies.
+	 * @param other - a homology to compare with.
+	 * @returns true if this homology starts left of the argument wrt. the
+	 * reference genome.
+	 */
 	bool starts_left_of(const homology &other) const noexcept
 	{
 		return index_reference_projected < other.index_reference_projected;
 	}
 
+	/** @brief Determine the order of two homologies.
+	 * @param other - a homology to compare with.
+	 * @returns true if this homology ends left of the argument wrt. the
+	 * reference genome.
+	 */
 	bool ends_left_of(const homology &other) const noexcept
 	{
 		return index_reference_projected + length <=
@@ -195,6 +236,14 @@ class homology
 	}
 };
 
+/** @brief Compute the length of the common prefix.
+ * Given two strings return the number of characters being equal at the
+ * beginning of both string.
+ * @param S - One string.
+ * @param Q - Another string.
+ * @param remaining - The maximum number of characters to investigate.
+ * @returns the LCP.
+ */
 size_t lcp(const char *S, const char *Q, size_t remaining)
 {
 	size_t length = 0;
@@ -206,6 +255,15 @@ size_t lcp(const char *S, const char *Q, size_t remaining)
 
 /**
  * @brief Compute homologies between two sequences.
+ *
+ * A homology is defined as a region on two sequences which two flanking
+ * anchors. These anchors are long exact matches. For a detailed explanation see
+ * Haubold et al 2014.
+ *
+ * @param ref - the reference sequence and ESA.
+ * @param gc - the GC content of the reference.
+ * @param seq - the query.
+ * @returns a list of homologies.
  */
 auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 {
@@ -313,6 +371,16 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 evo_model compare(const sequence &sa, const std::vector<homology> &ha,
 				  const sequence &sb, const std::vector<homology> &hb);
 
+/** @brief Remove all homologies that overlap any other.
+ *
+ * The result of `anchor_homologies` is a set of homologies. However, some of
+ * these may overlap on the reference interfering with mutation counting later
+ * on. Thus matches have to be filtered.
+ *
+ * This function removes all homologies which overlap with any other one.
+ *
+ * @param pile - in out parameter with homologies.
+ */
 void filter_overlaps_strict(std::vector<homology> &pile)
 {
 	if (pile.size() < 2) return;
@@ -342,6 +410,19 @@ void filter_overlaps_strict(std::vector<homology> &pile)
 	pile.erase(split, pile.end());
 }
 
+/** @brief Maximizes the number of homologous nucleotides by carefully removing
+ * all but one of the overlapping homologies.
+ *
+ * The result of `anchor_homologies` is a set of homologies. However, some of
+ * these may overlap on the reference interfering with mutation counting later
+ * on. Thus matches have to be filtered.
+ *
+ * This function selectively reduces overlapping stacks to only a single
+ * homology. It does this by chaining neighboring homologies. The chain with
+ * most nucleotides is then kept, all homologies not in it get removed.
+ *
+ * @param pile - in out parameter with homologies.
+ */
 void filter_overlaps_max(std::vector<homology> &pile)
 {
 	if (pile.size() < 2) return;
@@ -391,8 +472,10 @@ void filter_overlaps_max(std::vector<homology> &pile)
 	pile.erase(split, pile.end());
 }
 
-/**
- *
+/** @brief Process the input and do a lot of stuff.
+ * @param subject - The subject sequence.
+ * @param queries - All sequences.
+ * @returns a "matrix" of mutation counts.
  */
 std::vector<evo_model> process(const sequence &subject,
 							   const std::vector<sequence> &queries)
@@ -460,6 +543,14 @@ char complement(char c)
 	return inv[evo_model::hash(c)];
 }
 
+/** @brief Compare two sequences based on their precomputed homologies wrt. the
+ * reference.
+ * @param sa - One sequence.
+ * @param ha - The homologies of sequence A with the reference.
+ * @param sb - Another sequence.
+ * @param hb - The homologies of sequence B with the reference.
+ * @returns mutation counts.
+ */
 evo_model compare(const sequence &sa, const std::vector<homology> &ha,
 				  const sequence &sb, const std::vector<homology> &hb)
 {
@@ -507,6 +598,13 @@ evo_model compare(const sequence &sa, const std::vector<homology> &ha,
 	return mutations;
 }
 
+/** @brief Compare the homologous region of two sequences.
+ * @param sa - One sequence.
+ * @param ha - The homology of sequence A with the reference.
+ * @param sb - Another sequence.
+ * @param hb - The homology of sequence B with the reference.
+ * @returns mutation counts.
+ */
 evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 				  const homology &hb)
 {

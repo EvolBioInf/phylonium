@@ -35,26 +35,42 @@ typedef struct {
 	saidx_t m;
 } lcp_interval;
 
+/** @brief A full text index.
+ * Basically, this is a bunch of arrays working together for fast lookups.
+ */
 class esa
 {
+	/** Length of the arrays. */
 	int m_size = 0;
+	/** The sequence at the basis of the ESA. */
 	sequence m_master{};
 
+	/** The Longest Common Prefix array. */
 	std::unique_ptr<saidx_t[]> LCP;
+	/** The child array. */
 	std::unique_ptr<saidx_t[]> CLD;
+	/** The First Variant Character array. See Klötzl (2015) for an explanation.
+	 */
 	std::unique_ptr<char[]> FVC;
+	/** A cache to speed up the look-up. */
 	std::unique_ptr<lcp_interval[]> cache;
 
   public:
+	/** The Suffix Array */
 	std::unique_ptr<saidx_t[]> SA;
+	/** The base string */
 	std::string S{""};
 
+	/** @brief a reasonable default constructor */
 	esa() = default;
 	esa(const sequence &);
 
 	lcp_interval get_match(const char *, size_t) const;
 	lcp_interval get_match_cached(const char *, size_t) const;
 
+	/** @brief Get length of the arrays.
+	 * @returns the length of the arrays.
+	 */
 	auto size() const noexcept
 	{
 		return m_size;
@@ -71,11 +87,19 @@ class esa
 								lcp_interval) const;
 	lcp_interval get_interval(lcp_interval ij, char a) const;
 
+	/** @brief Get the right child of a node.
+	 * @param idx - Index of the node.
+	 * @returns the index of the right child node.
+	 */
 	auto &right_child(ssize_t idx) const noexcept
 	{
 		return CLD[idx];
 	}
 
+	/** @brief Get the left child of a node.
+	 * @param idx - Index of the node.
+	 * @returns the index of the left child node.
+	 */
 	auto &left_child(ssize_t idx) const noexcept
 	{
 		return CLD[idx - 1];

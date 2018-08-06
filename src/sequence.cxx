@@ -13,8 +13,10 @@
 #include <memory>
 #include <vector>
 
-void normalize(std::string &) noexcept;
-
+/** @brief Create a new sequence object.
+ * @param name_ - The new name.
+ * @param nucl_ - The new nucleotide sequence.
+ */
 sequence::sequence(std::string name_, std::string nucl_) noexcept
 	: name{std::move(name_)}, nucl{std::move(nucl_)}, length{nucl.size()}
 {
@@ -25,6 +27,9 @@ sequence::sequence(std::string name_, std::string nucl_) noexcept
 	}
 }
 
+/** @brief Create a FASTA entry from the entry.
+ * @returns a FASTA entry.
+ */
 std::string sequence::to_fasta() const
 {
 	static const ssize_t LINE_LENGTH = 70;
@@ -48,7 +53,7 @@ std::string sequence::to_fasta() const
 /**
  * @brief Compute the reverse complement.
  * @param base - The master string.
- * @return The reverse complement.
+ * @returns the reverse complement.
  */
 std::string reverse(const std::string &base)
 {
@@ -78,6 +83,10 @@ std::string reverse(const std::string &base)
 	return ret;
 }
 
+/** @brief Filter out weird nucleotides.
+ * @param base - The string to filter.
+ * @returns a new string non-canonical nucleotides removed.
+ */
 std::string filter_nucl(const std::string &base)
 {
 	std::string ret{};
@@ -100,6 +109,10 @@ std::string filter_nucl(const std::string &base)
 	return ret;
 }
 
+/** @brief Compute the GC content.
+ * @param seq - The nucleotide sequence.
+ * @returns the fraction of GC in the nucleotide sequence.
+ */
 double gc_content(const std::string &seq) noexcept
 {
 	size_t gc = 0;
@@ -115,8 +128,9 @@ double gc_content(const std::string &seq) noexcept
 	return static_cast<double>(gc) / length;
 }
 
-/**
- *
+/** @brief Linearize the genome into one sequence.
+ * @param gen - The genome.
+ * @returns a sequence consisting of all the contigs joined together.
  */
 sequence join(const genome &gen)
 {
