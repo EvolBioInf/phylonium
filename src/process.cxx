@@ -259,11 +259,11 @@ size_t lcp(const char *S, const char *Q, size_t remaining)
  * Haubold et al 2014.
  *
  * @param ref - the reference sequence and ESA.
- * @param gc - the GC content of the reference.
+ * @param threshold - minimum length of an anchor.
  * @param seq - the query.
  * @returns a list of homologies.
  */
-auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
+auto anchor_homologies(const esa &ref, size_t threshold, const sequence &seq)
 {
 	auto hv = std::vector<homology>();
 
@@ -281,8 +281,6 @@ auto anchor_homologies(const esa &ref, double gc, const sequence &seq)
 	size_t this_pos_Q = 0;
 	size_t this_pos_S;
 	size_t this_length;
-
-	size_t threshold = min_anchor_length(RANDOM_ANCHOR_PROP, gc, ref.size());
 
 	auto current = homology(0, 0);
 
@@ -485,6 +483,7 @@ std::vector<evo_model> process(const sequence &subject,
 	auto homologies = std::vector<std::vector<homology>>(N);
 
 	auto gc = gc_content(subject.get_nucl());
+	size_t threshold = min_anchor_length(RANDOM_ANCHOR_PROP, gc, ref.size());
 
 	if (FLAGS & flags::verbose) {
 		std::cerr << "ref: " << subject.get_name() << std::endl;
@@ -496,7 +495,7 @@ std::vector<evo_model> process(const sequence &subject,
 	for (size_t j = 0; j < N; j++) {
 		// std::cerr << "query: " << j << std::endl;
 		auto query = queries[j];
-		auto hvlocal = anchor_homologies(ref, gc, query);
+		auto hvlocal = anchor_homologies(ref, threshold, query);
 		std::sort(begin(hvlocal), end(hvlocal),
 				  [](const homology &self, const homology &other) {
 					  return self.starts_left_of(other);
