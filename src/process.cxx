@@ -525,7 +525,7 @@ std::vector<evo_model> process(const sequence &subject,
 	for (size_t i = 0; i < N; i++) {
 		for (size_t j = i + 1; j < N; j++) {
 
-			M(j, i) = M(i, j) +=
+			M(j, i) = M(i, j) =
 				compare(queries[i], homologies[i], queries[j], homologies[j]);
 		}
 	}
