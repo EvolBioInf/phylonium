@@ -340,31 +340,33 @@ pick_first_pass(std::vector<sequence> &sequences)
 	return ret;
 }
 
+/** @brief Remove duplicates from a vector.
+ * @param vec - in out parameter.
+ */
+void remove_duplicates(std::vector<std::string>& vec)
+{
+	auto split = std::unique(vec.begin(), vec.end());
+	vec.erase(split, vec.end());
+}
+
 void cleanup_names(std::vector<std::string> &reference_names,
 				   std::vector<std::string> &file_names)
 {
 	std::sort(reference_names.begin(), reference_names.end());
 	std::sort(file_names.begin(), file_names.end());
 
-	// remove doubles
-	auto split = std::unique(reference_names.begin(), reference_names.end());
-	reference_names.erase(split, reference_names.end());
-
-	// remove doubles
-	split = std::unique(file_names.begin(), file_names.end());
-	file_names.erase(split, file_names.end());
+	remove_duplicates(reference_names);
+	remove_duplicates(file_names);
 
 	auto all_names = std::vector<std::string>();
 	all_names.reserve(std::max(reference_names.size(), file_names.size()));
 
-	// merge int all_names
+	// merge all_names
 	std::set_union(reference_names.begin(), reference_names.end(),
 				   file_names.begin(), file_names.end(),
 				   std::back_inserter(all_names));
 
-	// remove doubles
-	split = std::unique(all_names.begin(), all_names.end());
-	all_names.erase(split, all_names.end());
+	remove_duplicates(all_names);
 
 	// output
 	file_names.swap(all_names);

@@ -12,8 +12,6 @@
 #include "global.h"
 #include "sequence.h"
 
-char complement(char c);
-
 double shuprop(size_t, double, size_t);
 
 /** @brief Find an element based on its index.
@@ -534,13 +532,6 @@ std::vector<evo_model> process(const sequence &subject,
 	}
 
 	return matrix;
-}
-
-char complement(char c)
-{
-	if (evo_model::hash(c) < 0) return 0;
-	static const char inv[] = "TGCA";
-	return inv[evo_model::hash(c)];
 }
 
 /** @brief Compare two sequences based on their precomputed homologies wrt. the
