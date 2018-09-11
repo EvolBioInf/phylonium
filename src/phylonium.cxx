@@ -343,7 +343,7 @@ pick_first_pass(std::vector<sequence> &sequences)
 /** @brief Remove duplicates from a vector.
  * @param vec - in out parameter.
  */
-void remove_duplicates(std::vector<std::string>& vec)
+void remove_duplicates(std::vector<std::string> &vec)
 {
 	auto split = std::unique(vec.begin(), vec.end());
 	vec.erase(split, vec.end());

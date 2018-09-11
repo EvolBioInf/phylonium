@@ -13,7 +13,8 @@
 /** @brief A class to hold DNA sequences. */
 class sequence
 {
-	/** An identifying name for the sequence. Commonly taken from FASTA header. */
+	/** An identifying name for the sequence. Commonly taken from FASTA header.
+	 */
 	std::string name{};
 	/** The DNA sequence. */
 	std::string nucl{};

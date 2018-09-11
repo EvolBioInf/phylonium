@@ -2,10 +2,10 @@
 #include <algorithm>
 #include <assert.h>
 #include <cmath>
+#include <cstring>
 #include <iostream>
 #include <iterator>
 #include <numeric>
-#include <cstring>
 
 constexpr bool is_complement(char c, char d);
 
@@ -15,11 +15,7 @@ constexpr bool is_complement(char c, char d);
 
 typedef __m256i vec_type;
 
-size_t
-count_subst_avx512(
-	const char *self,
-	const char *other,
-	size_t length)
+size_t count_subst_avx512(const char *self, const char *other, size_t length)
 {
 	size_t substitutions = 0;
 
@@ -58,11 +54,7 @@ count_subst_avx512(
 
 typedef __m256i vec_type;
 
-size_t
-count_subst_avx2(
-	const char *self,
-	const char *other,
-	size_t length)
+size_t count_subst_avx2(const char *self, const char *other, size_t length)
 {
 	size_t substitutions = 0;
 	size_t offset = 0;
@@ -109,12 +101,10 @@ count_subst_avx2(
 
 #endif
 
-
 #ifdef __SSE2__
 #include <emmintrin.h>
 
-size_t
-intr(const char *self, const char *other, size_t length)
+size_t intr(const char *self, const char *other, size_t length)
 {
 	size_t substitutions = 0;
 	size_t offset = 0;
@@ -130,7 +120,8 @@ intr(const char *self, const char *other, size_t length)
 		size_t pos = length - (vec_offset + 1) * sizeof(__m128i);
 		memcpy(&o, other + pos, sizeof(o));
 
-		__m128i mask = _mm_set_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+		__m128i mask =
+			_mm_set_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
 		__m128i reversed = _mm_shuffle_epi8(o, mask);
 
 		__m128i v1 = _mm_xor_si128(b, reversed);
@@ -156,7 +147,6 @@ intr(const char *self, const char *other, size_t length)
 }
 
 #endif
-
 
 gsl_rng *RNG;
 
@@ -199,7 +189,6 @@ void evo_model::account(const char *sa, const char *sb, size_t length) noexcept
 	size_t mutations = 0;
 	size_t offset = 0;
 
-
 #ifdef __AVX512BW__
 #ifdef __AVX512VL__
 
@@ -240,7 +229,8 @@ constexpr bool is_complement(char c, char d)
 /** @brief Compare one sequence with the reverse complement of another.
  * @param sa - The forward sequence.
  * @param sb - The sequence of which the reverse complement is of interest.
- * @param b_offset - The offset of the reverse complement (TODO: get rid of this).
+ * @param b_offset - The offset of the reverse complement (TODO: get rid of
+ * this).
  * @param length - The length of the homologous region.
  */
 void evo_model::account_rev(const char *sa, const char *sb, size_t b_offset,
