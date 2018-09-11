@@ -1,4 +1,4 @@
-.TH PHYLONIUM "1" "2018-07-16" "@VERSION@" "phylonium manual"
+.TH PHYLONIUM "1" "2018-09-12" "@VERSION@" "phylonium manual"
 .SH NAME
 phylonium \- rapidly estimate evolutionary distance
 .SH SYNOPSIS
@@ -11,8 +11,14 @@ phylonium \- rapidly estimate evolutionary distance
 The output is a symmetrical distance matrix in \fIPHYLIP\fR format, with each entry representing divergence with a positive, real number. A distance of zero means that two sequences are identical, whereas other values are estimates for the nucleotide substitution rate (Jukes-Cantor corrected). For technical reasons the comparison might fail and no estimate can be computed. In such cases \fInan\fR is printed. This either means that the input sequences were too short (<200bp) or too diverse (K>0.5) for our method to work properly.
 .SH OPTIONS
 .TP
+\fB\-2\fR, \fB\-\-2pass\fR
+After a first run a 'central' sequence is chosen as reference for the second pass. This improves the accuracy when the first reference is an outgroup.
+.TP
 \fB\-b\fR \fIINT\fR, \fB\-\-bootstrap\fR=\fIINT\fR
 Compute multiple distance matrices, with \fIn-1\fR bootstrapped from the first. See the paper Klötzl & Haubold (2016) for a detailed explanation.
+.TP
+\fB\-r\fR \fIFILE\fR
+Define the reference sequence. If multiple references are given the evolutionary distance computed from the most homologous nucleotides is printed.
 .TP
 \fB\-t\fR \fIINT\fR, \fB\-\-threads\fR=\fIINT\fR
 The number of threads to be used; by default, all available processors are used.

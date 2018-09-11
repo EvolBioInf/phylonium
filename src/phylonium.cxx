@@ -379,19 +379,19 @@ void usage(int status)
 {
 	const char str[] = {
 		"Usage: phylonium [OPTIONS] FILES...\n"
-		"\tFILES... can be any sequence of FASTA files.\n"
-		"\tUse '-' to force reading from standard input.\n\n"
+		"\tFILES... can be any sequence of FASTA files, each file representing "
+		"one genome.\n\n"
 		"Options:\n"
+		"  -2, --2pass       Enable two-pass algorithm\n"
+		"  -b, --bootstrap=N Print additional bootstrap matrices\n"
 		"  -r FILE           Add FILE to the list of references\n"
-		"  -v, --verbose     Prints additional information\n"
 #ifdef _OPENMP
-		"  -t, --threads <INT> \n"
-		"                    The number of threads to be used; by default, all "
+		"  -t, --threads=N   The number of threads to be used; by default, all "
 		"available processors are used\n"
 #endif
+		"  -v, --verbose     Prints additional information\n"
 		"  -h, --help        Display this help and exit\n"
 		"      --version     Output version information and acknowledgments\n"};
-
 	fprintf(status == EXIT_SUCCESS ? stdout : stderr, "%s", str);
 	exit(status);
 }
