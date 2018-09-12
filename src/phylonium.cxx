@@ -27,12 +27,14 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <err.h>
 #include <errno.h>
 #include <functional>
 #include <getopt.h>
 #include <gsl/gsl_rng.h>
 #include <iostream>
+#include <limits>
 #include <string.h>
 #include <string>
 #include <unistd.h>
@@ -58,13 +60,15 @@ int RETURN_CODE = EXIT_SUCCESS;
 void usage(int);
 void version(void);
 
+using mat_type = std::vector<evo_model>;
+
 std::vector<std::reference_wrapper<sequence>>
-pick_second_pass(std::vector<sequence> &sequences,
-				 const std::vector<evo_model> &matrix);
+pick_second_pass(std::vector<sequence> &sequences, const mat_type &matrix);
 std::vector<std::reference_wrapper<sequence>>
 pick_first_pass(std::vector<sequence> &sequences);
 void cleanup_names(std::vector<std::string> &reference_names,
 				   std::vector<std::string> &file_names);
+mat_type merge(const std::vector<mat_type> &matrices);
 
 int main(int argc, char *argv[])
 {
@@ -199,6 +203,7 @@ int main(int argc, char *argv[])
 		errx(1, "Less than two genomes given, nothing to compare.");
 	}
 
+	// avoid copying sequences
 	auto references = std::vector<std::reference_wrapper<sequence>>();
 	if (reference_names.empty()) {
 		references = pick_first_pass(queries);
@@ -210,23 +215,14 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	using mat_type = std::vector<evo_model>;
 	auto matrices = std::vector<mat_type>();
 
 	for (const auto &subject : references) {
 		auto matrix = process(subject, queries);
 		matrices.push_back(matrix);
-		// print_matrix(subject, queries, matrix);
 	}
 
-	auto super_matrix = mat_type(matrices[0].size());
-
-	for (const auto &matrix : matrices) {
-		for (ssize_t i = 0; i < matrix.size(); i++) {
-			super_matrix[i] =
-				evo_model::select_by_total(super_matrix[i], matrix[i]);
-		}
-	}
+	auto super_matrix = merge(matrices);
 
 	if (two_pass) {
 		auto references = pick_second_pass(queries, super_matrix);
@@ -238,19 +234,7 @@ int main(int argc, char *argv[])
 			new_matrices.push_back(matrix);
 		}
 
-		// copy last pass
-		// std::copy(matrices.begin(), matrices.end(),
-		// std::back_inserter(new_matrices));
-
-		auto new_super_matrix = mat_type(new_matrices[0].size());
-
-		for (const auto &matrix : new_matrices) {
-			for (ssize_t i = 0; i < matrix.size(); i++) {
-				new_super_matrix[i] =
-					evo_model::select_by_total(new_super_matrix[i], matrix[i]);
-			}
-		}
-
+		auto new_super_matrix = merge(new_matrices);
 		print_matrix(queries, new_super_matrix);
 	} else {
 		print_matrix(queries, super_matrix);
@@ -259,25 +243,40 @@ int main(int argc, char *argv[])
 	return RETURN_CODE;
 }
 
+/** @brief Picks the references for the second pass according to some criterion.
+ *
+ * For the second pass we make an informed choice about the reference(s) using
+ * the distances computed in the first pass. There are a number of possible
+ * options:
+ *
+ *  - ingroup
+ *  - outgroup
+ *  - best coverage
+ *
+ * At the moment the most central sequence is chosen.
+ *
+ * @param sequences - The input sequences.
+ * @param matrix - The distance matrix from the first pass.
+ * @returns a new reference.
+ */
 std::vector<std::reference_wrapper<sequence>>
 pick_second_pass(std::vector<sequence> &sequences,
 				 const std::vector<evo_model> &matrix)
 {
 	auto ret = std::vector<std::reference_wrapper<sequence>>();
 
-	auto rows = std::vector<double>();
-	rows.reserve(sequences.size());
-
 	auto size = sequences.size();
 
-	auto central_value = 1111111.0; // fixme
+	auto dist_matrix = std::vector<double>(size * size, NAN);
+	std::transform(std::begin(matrix), std::end(matrix),
+				   std::begin(dist_matrix),
+				   [](const evo_model &em) { return em.estimate_JC(); });
+
+	auto central_value = std::numeric_limits<double>::max();
 	auto central_index = (size_t)0;
 	for (size_t i = 0; i < size; i++) {
-		auto sum = std::accumulate(matrix.begin() + i * size,
-								   matrix.begin() + i * size + size, 0.0,
-								   [](double s, const evo_model &e) {
-									   return s + e.estimate_JC(); //
-								   });
+		auto sum = std::accumulate(dist_matrix.begin() + i * size,
+								   dist_matrix.begin() + i * size + size, 0.0);
 
 		if (sum < central_value) {
 			central_value = sum;
@@ -286,37 +285,23 @@ pick_second_pass(std::vector<sequence> &sequences,
 	}
 	ret.push_back(sequences[central_index]);
 
-	// auto outgroup_value = 0.0;
-	// auto outgroup_index = (size_t)0;
-	// for (size_t i = 0; i < size; i++) {
-	// 	auto sum = std::accumulate(matrix.begin() + i * size,
-	// 							   matrix.begin() + i * size + size, 0.0,
-	// 							   [](double s, const evo_model &e) {
-	// 								   return s + e.estimate_JC(); //
-	// 							   });
-
-	// 	if (sum > outgroup_value) {
-	// 		outgroup_value = sum;
-	// 		outgroup_index = i;
-	// 	}
-	// }
-
-	// auto ingroup_value = 0.0;
-	// auto ingroup_index = (size_t)0;
-	// for (size_t i = 0; i < size; i++) {
-	// 	if (i == outgroup_index) continue;
-
-	// 	auto val = matrix[outgroup_index * size + i].estimate_JC();
-	// 	if (val > ingroup_value) {
-	// 		ingroup_value = val;
-	// 		ingroup_index = i;
-	// 	}
-	// }
-	// ret.push_back(sequences[ingroup_index]);
-
 	return ret;
 }
 
+/** @brief Picks the references for the first pass according to some criterion.
+ *
+ * For the first pass we make an best-effort choice for a suitable reference if
+ * none was supplied by the user. There are a number of possible options:
+ *
+ *  - size (smallest, medium, largest)
+ *  - gc content (medium)
+ *  - assembly quality
+ *
+ * At the moment a sequence of medium length is chosen.
+ *
+ * @param sequences - The input sequences.
+ * @returns a new reference.
+ */
 std::vector<std::reference_wrapper<sequence>>
 pick_first_pass(std::vector<sequence> &sequences)
 {
@@ -334,7 +319,10 @@ pick_first_pass(std::vector<sequence> &sequences)
 	std::swap(ret[0], ret[ret.size() / 2]);
 	ret.erase(ret.begin() + 1, ret.end());
 
-	std::cerr << "chosen reference: " << ret[0].get().get_name() << std::endl;
+	if (FLAGS & flags::verbose) {
+		std::cerr << "chosen reference: " << ret[0].get().get_name()
+				  << std::endl;
+	}
 
 	return ret;
 }
@@ -371,8 +359,29 @@ void cleanup_names(std::vector<std::string> &reference_names,
 	file_names.swap(all_names);
 }
 
-/** @brief
- * Prints the usage to stdout and then exits successfully.
+/** @brief Merge multiple matrices by choosing the entry with the most
+ * homologous nucleotides per cell.
+ *
+ * @param matrices - The matrices to merge.
+ * @returns a new super matrix.
+ */
+mat_type merge(const std::vector<mat_type> &matrices)
+{
+	auto super_matrix = mat_type(matrices[0].size());
+
+	for (const auto &matrix : matrices) {
+		for (ssize_t i = 0; i < matrix.size(); i++) {
+			super_matrix[i] =
+				evo_model::select_by_total(super_matrix[i], matrix[i]);
+		}
+	}
+
+	return super_matrix;
+}
+
+/** @brief Prints the usage and then exits.
+ * @param status - The return status.
+ * @returns - It doesn't.
  */
 void usage(int status)
 {
@@ -396,7 +405,7 @@ void usage(int status)
 }
 
 /**
- * This function just prints the version string and then aborts
+ * @brief This function just prints the version string and then aborts
  * the program.
  */
 void version(void)
