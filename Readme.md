@@ -7,7 +7,7 @@ This is the `phylonium` program for estimating the evolutionary distances betwee
 
 This program depends on two external libraries: [libdivsufsort](https://github.com/y-256/libdivsufsort) and the [GSL](https://www.gnu.org/software/gsl/). Both should be available for installation through a package manager of your choice. Furthermore, to build from the git repository the autotools are required.
 
-Assuming all prerequisites are installed, build can proceed as follows.
+Assuming all prerequisites are installed, the build can be started as follows.
 
     $ autoreconf -fi -Im4
     $ ./configure
@@ -21,6 +21,7 @@ After a successful build the `phylonium` executable is found in the `src` direct
     Seq1     0.0  0.1
     Seq2     0.1  0.0
 
+All the sequences in one FASTA file are considered to be contigs of the same genome. The filename without the extension is used as ID in the output.
 
 # License
 
