@@ -26,8 +26,9 @@ sequence::sequence(std::string name_, std::string nucl_) noexcept
 {
 	const size_t LENGTH_LIMIT = (INT_MAX - 1) / 2;
 	if (this->size() > LENGTH_LIMIT) {
-		warnx("The input sequence %s is too long. The technical limit is %zu.",
-			  this->name.c_str(), LENGTH_LIMIT);
+		errx(1,
+			 "The input sequence %s is too long. The technical limit is %zu.",
+			 this->name.c_str(), LENGTH_LIMIT);
 	}
 }
 
