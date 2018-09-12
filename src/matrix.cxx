@@ -1,3 +1,7 @@
+/**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright 2018 © Fabian Klötzl
+ */
 /*
  * Copyright (C) 2017  Fabian Klötzl
  * This program is free software: you can redistribute it and/or modify

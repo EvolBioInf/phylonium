@@ -1,4 +1,8 @@
 /**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright 2018 © Fabian Klötzl
+ */
+/**
  * @file
  * @brief This file contains various distance methods.
  */

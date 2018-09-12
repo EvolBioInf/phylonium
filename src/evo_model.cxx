@@ -1,3 +1,7 @@
+/**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright 2018 © Fabian Klötzl
+ */
 #include "evo_model.h"
 #include <algorithm>
 #include <assert.h>
