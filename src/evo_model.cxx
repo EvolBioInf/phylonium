@@ -327,5 +327,5 @@ evo_model evo_model::bootstrap() const
  */
 double evo_model::coverage(size_t length) const noexcept
 {
-	return total() / length;
+	return (double)total() / length;
 }
