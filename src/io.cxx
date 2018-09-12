@@ -52,8 +52,7 @@ std::vector<sequence> read_fasta(std::string s_file_name, std::string prefix)
 	std::vector<sequence> sequences{};
 	const char *file_name = s_file_name.c_str();
 
-	int file_descriptor =
-		s_file_name != "-" ? open(file_name, O_RDONLY) : STDIN_FILENO;
+	int file_descriptor = open(file_name, O_RDONLY);
 
 	if (file_descriptor < 0) {
 		err(errno, "%s", file_name);
@@ -76,7 +75,6 @@ std::vector<sequence> read_fasta(std::string s_file_name, std::string prefix)
 		errx(1, "%s: %s", file_name, pfasta_strerror(&pf));
 	}
 
-fail:
 	pfasta_free(&pf);
 	close(file_descriptor);
 
@@ -90,8 +88,9 @@ genome read_genome(std::string file_name)
 	return genome{species, read_fasta(file_name, "")};
 }
 
-void just_print(const std::vector<std::string> &names,
-				const std::vector<evo_model> &matrix)
+void just_print(const std::vector<sequence> &queries,
+				const std::vector<std::string> &names,
+				const std::vector<evo_model> &matrix, bool warnings = false)
 {
 
 	auto N = names.size();
@@ -104,9 +103,32 @@ void just_print(const std::vector<std::string> &names,
 	for (size_t i = 0; i < N; i++) {
 		std::cout << names[i];
 		for (size_t j = 0; j < N; j++) {
-			std::cout << "  " << std::setw(8) << std::setprecision(4)
-					  << (i == j ? 0.0 : dist_matrix[i * N + j]);
+			auto index = i * N + j;
+			auto dist = (i == j ? 0.0 : dist_matrix[index]);
+
+			std::cout << "  " << std::setw(8) << std::setprecision(4) << dist;
+
+			if (std::isnan(dist) && warnings) {
+				const char str[] = {
+					"For the two sequences '%s' and '%s' the distance "
+					"computation failed and is reported as nan."};
+				soft_errx(str, names[i].c_str(), names[j].c_str());
+			}
+
+			if (!std::isnan(dist) && i < j && warnings) {
+				double coverage1 = matrix[index].coverage(queries[i].size());
+				double coverage2 = matrix[index].coverage(queries[j].size());
+
+				if (coverage1 < 0.2 || coverage2 < 0.2) {
+					const char str[] = {
+						"For the two sequences '%s' and '%s' less than 20%% "
+						"homology were found (%f and %f, respectively)."};
+					soft_errx(str, names[i].c_str(), names[j].c_str(),
+							  coverage1, coverage2);
+				}
+			}
 		}
+
 		std::cout << std::endl;
 	}
 }
@@ -119,14 +141,14 @@ void print_matrix(const std::vector<sequence> &queries,
 	std::transform(std::begin(queries), std::end(queries), std::begin(names),
 				   [&](const sequence &seq) { return seq.get_name(); });
 
-	just_print(names, matrix);
+	just_print(queries, names, matrix, true);
 	if (BOOTSTRAP) {
 		auto neu = std::vector<evo_model>(N * N);
 		for (auto k = 0; k < BOOTSTRAP; k++) {
 			std::transform(std::begin(matrix), std::end(matrix),
 						   std::begin(neu),
 						   [](const evo_model &em) { return em.bootstrap(); });
-			just_print(names, neu);
+			just_print(queries, names, neu);
 		}
 	}
 }
@@ -148,10 +170,8 @@ void print_matrix(const sequence &subject, const std::vector<sequence> &queries,
 			covf << queries[i].get_name();
 
 			for (size_t j = 0; j < N; j++) {
-				// TODO: queries[j].get_length() wrong length!
 				covf << "  " << std::setw(8) << std::setprecision(4)
-					 << M(i, j).total() /* / ((double)queries[j].size())*/
-					;
+					 << M(i, j).total();
 			}
 			covf << std::endl;
 		}

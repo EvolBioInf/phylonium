@@ -32,6 +32,7 @@ class evo_model
 	size_t total() const noexcept;
 	double estimate_raw() const noexcept;
 	double estimate_JC() const noexcept;
+	double coverage(size_t length) const noexcept;
 
 	/** @brief Compare two counts of homologous nucleotides by length.
 	 * @param self - This count.

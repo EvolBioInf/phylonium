@@ -49,6 +49,7 @@ double RANDOM_ANCHOR_PROP = 0.025;
 int FLAGS = flags::none;
 int THREADS = 1;
 long unsigned int BOOTSTRAP = 0;
+int RETURN_CODE = EXIT_SUCCESS;
 
 void usage(int);
 void version(void);
@@ -110,7 +111,7 @@ int main(int argc, char *argv[])
 				long unsigned int bootstrap = strtoul(optarg, &end, 10);
 
 				if (errno || end == optarg || *end != '\0' || bootstrap == 0) {
-					warnx(
+					soft_errx(
 						"Expected a positive number for -b argument, but '%s' "
 						"was given. Ignoring -b argument.",
 						optarg);
@@ -178,13 +179,7 @@ int main(int argc, char *argv[])
 	cleanup_names(reference_names, file_names);
 
 	if (file_names.size() < 2) {
-		if (!isatty(STDIN_FILENO)) {
-			// if no files are supplied, read from stdin
-			file_names.push_back("-");
-		} else {
-			// print a helpful message on './phylonium' without args
-			usage(EXIT_FAILURE);
-		}
+		usage(EXIT_FAILURE);
 	}
 
 	// at max `file_names` many files have to be read.
@@ -257,7 +252,7 @@ int main(int argc, char *argv[])
 		print_matrix(queries, super_matrix);
 	}
 
-	return 0;
+	return RETURN_CODE;
 }
 
 std::vector<std::reference_wrapper<sequence>>

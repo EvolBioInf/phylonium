@@ -317,3 +317,11 @@ evo_model evo_model::bootstrap() const
 
 	return ret;
 }
+
+/** @brief Computes the 'coverage'.
+ * @returns the number of nucleotides covered by this homology model.
+ */
+double evo_model::coverage(size_t length) const noexcept
+{
+	return total() / length;
+}
