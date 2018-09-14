@@ -281,10 +281,10 @@ size_t evo_model::total() const noexcept
 /** @brief Estimate the substitution rate.
  * @returns the rate of substitutions.
  */
-double evo_model::estimate_raw() const noexcept
+double evo_model::estimate_raw(bool zero_on_error) const noexcept
 {
 	size_t nucl = total();
-	if (nucl == 0) return 0;
+	if (nucl == 0) return zero_on_error ? 0.0 : NAN;
 
 	size_t SNPs = substitutions;
 	return SNPs / (double)nucl;
@@ -293,9 +293,9 @@ double evo_model::estimate_raw() const noexcept
 /** @brief Estimate the evolutionary distance via the Jukes-Cantor correction.
  * @returns the evolutionary distance.
  */
-double evo_model::estimate_JC() const noexcept
+double evo_model::estimate_JC(bool zero_on_error) const noexcept
 {
-	auto dist = estimate_raw();
+	auto dist = estimate_raw(zero_on_error);
 	dist = -0.75 * log(1.0 - (4.0 / 3.0) * dist); // jukes cantor
 
 	// fix negative zero

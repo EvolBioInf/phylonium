@@ -270,7 +270,7 @@ pick_second_pass(std::vector<sequence> &sequences,
 	auto dist_matrix = std::vector<double>(size * size, NAN);
 	std::transform(std::begin(matrix), std::end(matrix),
 				   std::begin(dist_matrix),
-				   [](const evo_model &em) { return em.estimate_JC(); });
+				   [](const evo_model &em) { return em.estimate_JC(true); });
 
 	auto central_value = std::numeric_limits<double>::max();
 	auto central_index = (size_t)0;
