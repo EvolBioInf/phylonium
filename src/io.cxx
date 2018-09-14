@@ -92,45 +92,56 @@ genome read_genome(std::string file_name)
 	return genome{species, read_fasta(file_name, "")};
 }
 
-void just_print(const std::vector<sequence> &queries,
-				const std::vector<std::string> &names,
-				const std::vector<evo_model> &matrix, bool warnings = false)
+void print_warnings(const std::vector<sequence> &queries,
+					const std::vector<std::string> &names,
+					const std::vector<double> &dist_matrix,
+					const std::vector<evo_model> &matrix)
 {
-
 	auto N = names.size();
-	auto dist_matrix = std::vector<double>(N * N, NAN);
-	std::transform(std::begin(matrix), std::end(matrix),
-				   std::begin(dist_matrix),
-				   [](const evo_model &em) { return em.estimate_JC(); });
 
-	std::cout << N << std::endl;
 	for (size_t i = 0; i < N; i++) {
-		std::cout << names[i];
-		for (size_t j = 0; j < N; j++) {
+		for (size_t j = 0; j < i; j++) {
 			auto index = i * N + j;
-			auto dist = (i == j ? 0.0 : dist_matrix[index]);
+			auto dist = dist_matrix[index];
 
-			std::cout << "  " << std::setw(8) << std::setprecision(4) << dist;
-
-			if (std::isnan(dist) && warnings) {
+			if (std::isnan(dist)) {
 				const char str[] = {
 					"For the two sequences '%s' and '%s' the distance "
 					"computation failed and is reported as nan."};
 				soft_errx(str, names[i].c_str(), names[j].c_str());
 			}
 
-			if (!std::isnan(dist) && i < j && warnings) {
-				double coverage1 = matrix[index].coverage(queries[i].size());
-				double coverage2 = matrix[index].coverage(queries[j].size());
+			if (!std::isnan(dist)) {
+				double cov1 = matrix[index].coverage(queries[i].size());
+				double cov2 = matrix[index].coverage(queries[j].size());
+				const char str[] = {
+					"For the two sequences '%s' and '%s' less than 20%% "
+					"homology were found (%f and %f, respectively)."};
 
-				if (coverage1 < 0.2 || coverage2 < 0.2) {
-					const char str[] = {
-						"For the two sequences '%s' and '%s' less than 20%% "
-						"homology were found (%f and %f, respectively)."};
-					soft_errx(str, names[i].c_str(), names[j].c_str(),
-							  coverage1, coverage2);
+				if (cov1 < 0.2 || cov2 < 0.2) {
+					soft_errx(str, names[i].c_str(), names[j].c_str(), cov1,
+							  cov2);
 				}
 			}
+		}
+	}
+}
+
+void just_print(const std::vector<std::string> &names,
+				const std::vector<double> &dist_matrix)
+{
+	auto N = names.size();
+
+	// Produce output in PHYLIP distance matrix format
+	std::cout << N << std::endl;
+	for (size_t i = 0; i < N; i++) {
+		std::cout << names[i];
+
+		for (size_t j = 0; j < N; j++) {
+			auto index = i * N + j;
+			auto dist = (i == j ? 0.0 : dist_matrix[index]);
+
+			std::cout << "  " << std::setw(8) << std::setprecision(4) << dist;
 		}
 
 		std::cout << std::endl;
@@ -145,14 +156,27 @@ void print_matrix(const std::vector<sequence> &queries,
 	std::transform(std::begin(queries), std::end(queries), std::begin(names),
 				   [&](const sequence &seq) { return seq.get_name(); });
 
-	just_print(queries, names, matrix, true);
+	auto dist_matrix = std::vector<double>(N * N, NAN);
+	std::transform(std::begin(matrix), std::end(matrix),
+				   std::begin(dist_matrix),
+				   [](const evo_model &em) { return em.estimate_JC(); });
+
+	// print warnings before distance matrix
+	print_warnings(queries, names, dist_matrix, matrix);
+
+	just_print(names, dist_matrix);
 	if (BOOTSTRAP) {
 		auto neu = std::vector<evo_model>(N * N);
 		for (auto k = 0; k < BOOTSTRAP; k++) {
 			std::transform(std::begin(matrix), std::end(matrix),
 						   std::begin(neu),
 						   [](const evo_model &em) { return em.bootstrap(); });
-			just_print(queries, names, neu);
+
+			std::transform(
+				std::begin(neu), std::end(neu), std::begin(dist_matrix),
+				[](const evo_model &em) { return em.estimate_JC(); });
+
+			just_print(names, dist_matrix);
 		}
 	}
 }
