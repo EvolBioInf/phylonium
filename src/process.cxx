@@ -430,14 +430,14 @@ void filter_overlaps_max(std::vector<homology> &pile)
 	size_t size = pile.size();
 
 	auto predecessor = std::vector<ssize_t>(size, -1);
-	auto score = std::vector<size_t>(size, 0);
+	auto score = std::vector<ssize_t>(size, 0);
 
 	assert(predecessor.size() == size);
 	assert(score.size() == size);
 
 	score[0] = pile[0].length;
 
-	for (ssize_t i = 1; i < size; i++) {
+	for (ssize_t i = 1; i < (ssize_t)size; i++) {
 		// find maximum, so far
 		auto max_value = (ssize_t)0;
 		auto max_index = (ssize_t)0;

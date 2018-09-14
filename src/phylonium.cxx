@@ -370,7 +370,7 @@ mat_type merge(const std::vector<mat_type> &matrices)
 	auto super_matrix = mat_type(matrices[0].size());
 
 	for (const auto &matrix : matrices) {
-		for (ssize_t i = 0; i < matrix.size(); i++) {
+		for (size_t i = 0; i < matrix.size(); i++) {
 			super_matrix[i] =
 				evo_model::select_by_total(super_matrix[i], matrix[i]);
 		}

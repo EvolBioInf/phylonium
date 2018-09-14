@@ -167,7 +167,7 @@ void print_matrix(const std::vector<sequence> &queries,
 	just_print(names, dist_matrix);
 	if (BOOTSTRAP) {
 		auto neu = std::vector<evo_model>(N * N);
-		for (auto k = 0; k < BOOTSTRAP; k++) {
+		for (auto k = (size_t)0; k < BOOTSTRAP; k++) {
 			std::transform(std::begin(matrix), std::end(matrix),
 						   std::begin(neu),
 						   [](const evo_model &em) { return em.bootstrap(); });
