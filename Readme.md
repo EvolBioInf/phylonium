@@ -14,14 +14,14 @@ Assuming all prerequisites are installed, the build can be started as follows.
     $ make
     $ make install
 
-After a successful build the `phylonium` executable is found in the `src` directory. It can then be run as a simple command line tool.
+After a successful build the `phylonium` executable is found in the `src` directory. It can then be run as a simple command line tool. All the sequences in one FASTA file are considered to be contigs of the same genome. The filename without the extension is used as ID in the output.
 
     $ phylonium Seq1.fasta Seq2.fasta
     2
     Seq1     0.0  0.1
     Seq2     0.1  0.0
 
-All the sequences in one FASTA file are considered to be contigs of the same genome. The filename without the extension is used as ID in the output.
+The output is a distance matrix in PHYLIP format. Use `phylip neighbor`, `mat nj` from [mattools](https://github.com/kloetzl/mattools) or any other neighbor-joining implementation to build the phylogenetic tree.
 
 # License
 
