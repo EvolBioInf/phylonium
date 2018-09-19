@@ -134,6 +134,9 @@ void just_print(const std::vector<std::string> &names,
 
 	// Produce output in PHYLIP distance matrix format
 	std::cout << N << std::endl;
+	std::cout.precision(4);
+	std::cout << std::scientific;
+
 	for (size_t i = 0; i < N; i++) {
 		std::cout << names[i];
 
@@ -141,7 +144,7 @@ void just_print(const std::vector<std::string> &names,
 			auto index = i * N + j;
 			auto dist = (i == j ? 0.0 : dist_matrix[index]);
 
-			std::cout << "  " << std::setw(8) << std::setprecision(4) << dist;
+			std::cout << "  " << dist;
 		}
 
 		std::cout << std::endl;
