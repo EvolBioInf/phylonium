@@ -106,7 +106,9 @@ size_t count_subst_avx2(const char *self, const char *other, size_t length)
 #endif
 
 #ifdef __SSE2__
+#ifdef __SSSE3__
 #include <emmintrin.h>
+#include <tmmintrin.h>
 
 size_t intr(const char *self, const char *other, size_t length)
 {
@@ -150,6 +152,7 @@ size_t intr(const char *self, const char *other, size_t length)
 	return substitutions;
 }
 
+#endif
 #endif
 
 gsl_rng *RNG;
