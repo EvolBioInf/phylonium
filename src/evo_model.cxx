@@ -247,8 +247,10 @@ void evo_model::account_rev(const char *sa, const char *sb, size_t b_offset,
 	size_t offset = 0;
 
 #ifdef __SSE2__
+#ifdef __SSSE3__
 	mutations += intr(sa, sb + b_offset - length, length);
 	offset += length;
+#endif
 #endif
 
 	for (; offset < length; offset++) {
