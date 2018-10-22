@@ -103,7 +103,8 @@ int main(int argc, char *argv[])
 	// parse arguments
 	while (1) {
 		int option_index;
-		int c = getopt_long(argc, argv, "2b:hr:t:v", long_options, &option_index);
+		int c =
+			getopt_long(argc, argv, "2b:hr:t:v", long_options, &option_index);
 
 		if (c == -1) {
 			break;
@@ -312,12 +313,9 @@ pick_second_pass(std::vector<sequence> &sequences,
 std::vector<std::reference_wrapper<sequence>>
 pick_first_pass(std::vector<sequence> &sequences)
 {
-	auto ret = std::vector<std::reference_wrapper<sequence>>();
-
 	// pick a reference by some criterion.
-	for (auto &seq : sequences) {
-		ret.push_back(seq);
-	}
+	auto ret = std::vector<std::reference_wrapper<sequence>>(sequences.begin(),
+															 sequences.end());
 
 	std::nth_element(ret.begin(), ret.begin() + ret.size() / 2, ret.end(),
 					 [](const sequence &a, const sequence &b) {
