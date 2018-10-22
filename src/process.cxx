@@ -175,6 +175,16 @@ class homology
 	{
 	}
 
+	auto start() const noexcept
+	{
+		return index_reference_projected;
+	}
+
+	auto end() const noexcept
+	{
+		return index_reference_projected + length;
+	}
+
 	/** @brief Extend the current homologous region to the right.
 	 * @param stride - amount of elongation.
 	 * @returns the new length.
@@ -205,7 +215,7 @@ class homology
 	 */
 	bool overlaps(const homology &other) const noexcept
 	{
-		if (index_reference_projected == other.index_reference_projected) {
+		if (start() == other.start()) {
 			return true;
 		}
 		if (starts_left_of(other)) return !ends_left_of(other);
@@ -223,7 +233,7 @@ class homology
 	 */
 	bool starts_left_of(const homology &other) const noexcept
 	{
-		return index_reference_projected < other.index_reference_projected;
+		return start() < other.start();
 	}
 
 	/** @brief Determine the order of two homologies.
@@ -233,8 +243,34 @@ class homology
 	 */
 	bool ends_left_of(const homology &other) const noexcept
 	{
-		return index_reference_projected + length <=
-			   other.index_reference_projected;
+		return end() <= other.start();
+	}
+
+	homology trim(size_t start, size_t end) const
+	{
+		if (direction == dir::forward) {
+			auto that = *this;
+			auto offset = start - index_reference_projected;
+
+			that.index_reference_projected += offset;
+			that.index_reference += offset;
+			that.index_query += offset;
+			that.length = end - start;
+
+			return that;
+		} else {
+			auto that = *this;
+			auto offset = start - index_reference_projected;
+			auto drift = index_reference_projected + length - end;
+
+			that.index_reference_projected += offset;
+
+			that.index_reference += drift;
+			that.index_query += drift;
+			that.length = end - start;
+
+			return that;
+		}
 	}
 };
 
@@ -520,6 +556,16 @@ std::vector<evo_model> process(const sequence &subject,
 				  << "ms.\n";
 	}
 
+	//////////////////////////////
+	// reduce to core genome
+
+	std::vector<std::vector<homology>> core_genome(
+		const std::vector<std::vector<homology>> &homologies);
+
+	homologies = core_genome(homologies);
+
+	//////////////////////////////
+
 	auto matrix = std::vector<evo_model>(N * N);
 	auto M = [&matrix, N = N](size_t i, size_t j) -> evo_model & {
 		return matrix[i * N + j];
@@ -607,11 +653,8 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 	}
 
 	auto count = evo_model{};
-	size_t common_start =
-		std::max(ha.index_reference_projected, hb.index_reference_projected);
-
-	size_t common_end = std::min(ha.index_reference_projected + ha.length,
-								 hb.index_reference_projected + hb.length);
+	size_t common_start = std::max(ha.start(), hb.start());
+	size_t common_end = std::min(ha.end(), hb.end());
 
 	assert(common_start < common_end);
 	size_t length = common_end - common_start;
@@ -657,4 +700,56 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 	}
 
 	return count;
+}
+
+std::vector<std::vector<homology>>
+core_genome(const std::vector<std::vector<homology>> &homologies)
+{
+	auto size = homologies.size();
+	auto core_homologies = std::vector<std::vector<homology>>(size);
+	auto ins = std::vector<std::back_insert_iterator<std::vector<homology>>>();
+	for (auto& vec : core_homologies) {
+		ins.push_back(std::back_inserter(vec));
+	}
+
+	using hom_iter = std::vector<homology>::const_iterator;
+
+	auto front = std::vector<hom_iter>();
+	auto back = std::vector<hom_iter>();
+
+	for (auto &homs : homologies) {
+		front.push_back(std::begin(homs));
+		back.push_back(std::end(homs));
+	}
+
+	auto front_has_not_reached_back = [&]() {
+		return std::inner_product(front.begin(), front.end(), back.begin(),
+								  true, std::logical_and<>(), std::less<>());
+	};
+
+	while (front_has_not_reached_back()) {
+
+		auto starts = std::vector<size_t>(size);
+		std::transform(front.begin(), front.end(), starts.begin(),
+					   [](hom_iter hit) { return hit->start(); });
+		auto common_start_elem = std::max_element(starts.begin(), starts.end());
+
+		auto ends = std::vector<size_t>(size);
+		std::transform(front.begin(), front.end(), ends.begin(),
+					   [](hom_iter hit) { return hit->end(); });
+		auto common_end_elem = std::min_element(ends.begin(), ends.end());
+
+		if (*common_start_elem < *common_end_elem) {
+			// generate overlap
+
+			std::transform(front.begin(), front.end(), ins.begin(), [=](auto hit){
+				return hit->trim(*common_start_elem, *common_end_elem);
+			});
+		}
+
+		auto leftmost = std::distance(std::begin(ends), common_end_elem);
+		front[leftmost]++;
+	}
+
+	return core_homologies;
 }
