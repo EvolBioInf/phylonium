@@ -185,6 +185,16 @@ class homology
 		return index_reference_projected + length;
 	}
 
+	auto start_query() const noexcept
+	{
+		return index_query;
+	}
+
+	auto end_query() const noexcept
+	{
+		return index_query + length;
+	}
+
 	/** @brief Extend the current homologous region to the right.
 	 * @param stride - amount of elongation.
 	 * @returns the new length.
@@ -659,44 +669,27 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 	assert(common_start < common_end);
 	size_t length = common_end - common_start;
 
+	auto hat = ha.trim(common_start, common_end);
+	auto hbt = hb.trim(common_start, common_end);
+
 	if (ha.direction == hb.direction &&
 		ha.direction == homology::dir::forward) {
 		// simple comparison
-
-		auto a_offset =
-			common_start - ha.index_reference_projected + ha.index_query;
-		auto b_offset =
-			common_start - hb.index_reference_projected + hb.index_query;
-
-		count.account(sa.c_str() + a_offset, sb.c_str() + b_offset, length);
+		count.account(sa.c_str() + hat.start_query(),
+					  sb.c_str() + hbt.start_query(), length);
 	} else if (ha.direction == hb.direction &&
 			   ha.direction == homology::dir::reverse) {
-		auto a_offset = ha.index_query + ha.length -
-						(common_start - ha.index_reference_projected);
-		auto b_offset = hb.index_query + hb.length -
-						(common_start - hb.index_reference_projected);
-
 		// no need for double complement.
-		count.account(sa.c_str() + a_offset - length,
-					  sb.c_str() + b_offset - length, length);
+		count.account(sa.c_str() + hat.start_query(),
+					  sb.c_str() + hbt.start_query(), length);
 	} else if (hb.direction == homology::dir::reverse) {
-		auto a_offset =
-			common_start - ha.index_reference_projected + ha.index_query;
-
 		// reverse b
-		auto b_offset = hb.index_query + hb.length -
-						(common_start - hb.index_reference_projected);
-
-		count.account_rev(sa.c_str() + a_offset, sb.c_str(), b_offset, length);
+		count.account_rev(sa.c_str() + hat.start_query(), sb.c_str(),
+						  hbt.end_query(), length);
 	} else if (ha.direction == homology::dir::reverse) {
-		auto b_offset =
-			common_start - hb.index_reference_projected + hb.index_query;
-
 		// reverse a
-		auto a_offset = ha.index_query + ha.length -
-						(common_start - ha.index_reference_projected);
-
-		count.account_rev(sb.c_str() + b_offset, sa.c_str(), a_offset, length);
+		count.account_rev(sb.c_str() + hbt.start_query(), sa.c_str(),
+						  hat.end_query(), length);
 	}
 
 	return count;
@@ -708,7 +701,7 @@ core_genome(const std::vector<std::vector<homology>> &homologies)
 	auto size = homologies.size();
 	auto core_homologies = std::vector<std::vector<homology>>(size);
 	auto ins = std::vector<std::back_insert_iterator<std::vector<homology>>>();
-	for (auto& vec : core_homologies) {
+	for (auto &vec : core_homologies) {
 		ins.push_back(std::back_inserter(vec));
 	}
 
@@ -742,9 +735,10 @@ core_genome(const std::vector<std::vector<homology>> &homologies)
 		if (*common_start_elem < *common_end_elem) {
 			// generate overlap
 
-			std::transform(front.begin(), front.end(), ins.begin(), [=](auto hit){
-				return hit->trim(*common_start_elem, *common_end_elem);
-			});
+			std::transform(
+				front.begin(), front.end(), ins.begin(), [=](auto hit) {
+					return hit->trim(*common_start_elem, *common_end_elem);
+				});
 		}
 
 		auto leftmost = std::distance(std::begin(ends), common_end_elem);
