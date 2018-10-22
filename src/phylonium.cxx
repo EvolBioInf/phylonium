@@ -88,6 +88,7 @@ int main(int argc, char *argv[])
 	static struct option long_options[] = {
 		{"2pass", no_argument, NULL, '2'},
 		{"bootstrap", required_argument, NULL, 'b'},
+		{"core", no_argument, NULL, 0},
 		{"help", no_argument, NULL, 'h'},
 		{"threads", required_argument, NULL, 't'},
 		{"verbose", no_argument, NULL, 'v'},
@@ -101,14 +102,20 @@ int main(int argc, char *argv[])
 
 	// parse arguments
 	while (1) {
-		int c = getopt_long(argc, argv, "2b:hr:t:v", long_options, NULL);
+		int option_index;
+		int c = getopt_long(argc, argv, "2b:hr:t:v", long_options, &option_index);
 
 		if (c == -1) {
 			break;
 		}
 
 		switch (c) {
-			case 0: break;
+			case 0: {
+				if (std::string(long_options[option_index].name) == "core") {
+					FLAGS |= flags::core;
+				}
+				break;
+			}
 			case '2': {
 				two_pass = true;
 				break;
