@@ -258,29 +258,24 @@ class homology
 
 	homology trim(size_t start, size_t end) const
 	{
-		if (direction == dir::forward) {
-			auto that = *this;
-			auto offset = start - index_reference_projected;
+		if (end <= start) return *this; // invalid input range, ignore.
 
-			that.index_reference_projected += offset;
+		// Carefully handle cases where the given range is bigger than *this.
+		auto that = *this;
+		auto offset = start > this->start() ? start - this->start() : 0;
+		auto drift = this->end() > end ? this->end() - end : 0;
+		that.index_reference_projected += offset;
+
+		if (direction == dir::forward) {
 			that.index_reference += offset;
 			that.index_query += offset;
-			that.length = end - start;
-
-			return that;
 		} else {
-			auto that = *this;
-			auto offset = start - index_reference_projected;
-			auto drift = index_reference_projected + length - end;
-
-			that.index_reference_projected += offset;
-
 			that.index_reference += drift;
 			that.index_query += drift;
-			that.length = end - start;
-
-			return that;
 		}
+
+		that.length = this->length - offset - drift;
+		return that;
 	}
 };
 
