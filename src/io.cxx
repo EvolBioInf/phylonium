@@ -182,6 +182,27 @@ void print_matrix(const std::vector<sequence> &queries,
 			just_print(names, dist_matrix);
 		}
 	}
+
+	double sum = 0.0;
+	size_t counter = 0;
+	for (size_t i = 0; i < N; i++) {
+		for (size_t j = 0; j < i; j++) {
+			auto index = i * N + j;
+			auto dist = dist_matrix[index];
+
+			if (!std::isnan(dist)) {
+				double cov1 = matrix[index].coverage(queries[i].size());
+				double cov2 = matrix[index].coverage(queries[j].size());
+
+				sum += cov1 + cov2;
+				counter += 2;
+			}
+		}
+	}
+
+	if (FLAGS & flags::verbose) {
+		std::cerr << "avg coverage: " << sum / counter << std::endl;
+	}
 }
 
 void print_matrix(const sequence &subject, const std::vector<sequence> &queries,
