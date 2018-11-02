@@ -262,8 +262,11 @@ class homology
 
 		// Carefully handle cases where the given range is bigger than *this.
 		auto that = *this;
-		auto offset = start > this->start() ? start - this->start() : 0;
-		auto drift = this->end() > end ? this->end() - end : 0;
+		auto offset = start > this->start() && start < this->end()
+						  ? start - this->start()
+						  : 0;
+		auto drift =
+			this->end() > end && end > this->start() ? this->end() - end : 0;
 		that.index_reference_projected += offset;
 
 		if (direction == dir::forward) {
@@ -274,6 +277,7 @@ class homology
 			that.index_query += drift;
 		}
 
+		assert(this->length > offset + drift);
 		that.length = this->length - offset - drift;
 		return that;
 	}
