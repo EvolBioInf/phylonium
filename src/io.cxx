@@ -49,7 +49,7 @@ std::string extract_genome(const std::string &s_file_name)
 /**
  * @brief This function reads sequences from a file.
  * @param file_name - The file to read.
- * @param dsa - (output parameter) An array that holds found sequences.
+ * @param prefix - A prefix for the name.
  */
 std::vector<sequence> read_fasta(std::string s_file_name, std::string prefix)
 {
@@ -62,24 +62,22 @@ std::vector<sequence> read_fasta(std::string s_file_name, std::string prefix)
 		err(errno, "%s", file_name);
 	}
 
-	int l;
-	pfasta_file pf;
-
-	if ((l = pfasta_parse(&pf, file_descriptor)) != 0) {
-		errx(1, "%s: %s", file_name, pfasta_strerror(&pf));
+	auto parser = pfasta_init(file_descriptor);
+	if (parser.errstr) {
+		errx(1, "%s: %s", file_name, parser.errstr);
 	}
 
-	pfasta_seq ps;
-	while ((l = pfasta_read(&pf, &ps)) == 0) {
-		sequences.emplace_back(prefix + ps.name, filter_nucl(ps.seq));
-		pfasta_seq_free(&ps);
+	while (!parser.done) {
+		auto record = pfasta_read(&parser);
+		if (parser.errstr) {
+			errx(1, "%s: %s", file_name, parser.errstr);
+		}
+		
+		sequences.emplace_back(prefix + record.name, filter_nucl(record.sequence));
+		pfasta_record_free(&record);
 	}
 
-	if (l < 0) {
-		errx(1, "%s: %s", file_name, pfasta_strerror(&pf));
-	}
-
-	pfasta_free(&pf);
+	pfasta_free(&parser);
 	close(file_descriptor);
 
 	return sequences;
