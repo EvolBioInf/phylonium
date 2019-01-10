@@ -72,8 +72,9 @@ std::vector<sequence> read_fasta(std::string s_file_name, std::string prefix)
 		if (parser.errstr) {
 			errx(1, "%s: %s", file_name, parser.errstr);
 		}
-		
-		sequences.emplace_back(prefix + record.name, filter_nucl(record.sequence));
+
+		sequences.emplace_back(prefix + record.name,
+							   filter_nucl(record.sequence));
 		pfasta_record_free(&record);
 	}
 

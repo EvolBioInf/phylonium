@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	static struct option long_options[] = {
 		{"2pass", no_argument, NULL, '2'},
 		{"bootstrap", required_argument, NULL, 'b'},
-		{"core", no_argument, NULL, 0},
+		{"complete-deletion", no_argument, NULL, 0},
 		{"help", no_argument, NULL, 'h'},
 		{"threads", required_argument, NULL, 't'},
 		{"verbose", no_argument, NULL, 'v'},
@@ -112,8 +112,9 @@ int main(int argc, char *argv[])
 
 		switch (c) {
 			case 0: {
-				if (std::string(long_options[option_index].name) == "core") {
-					FLAGS |= flags::core;
+				if (std::string(long_options[option_index].name) ==
+					"complete-deletion") {
+					FLAGS |= flags::complete_deletion;
 				}
 				break;
 			}
@@ -397,6 +398,8 @@ void usage(int status)
 		"Options:\n"
 		"  -2, --2pass       Enable two-pass algorithm\n"
 		"  -b, --bootstrap=N Print additional bootstrap matrices\n"
+		"  --complete-deletion  Delete the whole aligned column in case of "
+		"gaps\n"
 		"  -r FILE           Add FILE to the list of references\n"
 #ifdef _OPENMP
 		"  -t, --threads=N   The number of threads to be used; by default, all "

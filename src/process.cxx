@@ -571,7 +571,7 @@ std::vector<evo_model> process(const sequence &subject,
 	std::vector<std::vector<homology>> core_genome(
 		const std::vector<std::vector<homology>> &homologies);
 
-	if (FLAGS & flags::core) {
+	if (FLAGS & flags::complete_deletion) {
 		homologies = core_genome(homologies);
 	}
 
