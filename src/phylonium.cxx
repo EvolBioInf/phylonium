@@ -396,18 +396,19 @@ void usage(int status)
 		"\tFILES... can be any sequence of FASTA files, each file representing "
 		"one genome.\n\n"
 		"Options:\n"
-		"  -2, --2pass       Enable two-pass algorithm\n"
-		"  -b, --bootstrap=N Print additional bootstrap matrices\n"
+		"  -2, --2pass          Enable two-pass algorithm\n"
+		"  -b, --bootstrap=N    Print additional bootstrap matrices\n"
 		"  --complete-deletion  Delete the whole aligned column in case of "
 		"gaps\n"
-		"  -r FILE           Add FILE to the list of references\n"
+		"  -r FILE              Add FILE to the list of references\n"
 #ifdef _OPENMP
-		"  -t, --threads=N   The number of threads to be used; by default, all "
-		"available processors are used\n"
+		"  -t, --threads=N      The number of threads to be used; by default, "
+		"all available processors are used\n"
 #endif
-		"  -v, --verbose     Prints additional information\n"
-		"  -h, --help        Display this help and exit\n"
-		"      --version     Output version information and acknowledgments\n"};
+		"  -v, --verbose        Print additional information\n"
+		"  -h, --help           Display this help and exit\n"
+		"      --version        Output version information and "
+		"acknowledgments\n"};
 	fprintf(status == EXIT_SUCCESS ? stdout : stderr, "%s", str);
 	exit(status);
 }
