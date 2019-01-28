@@ -1,0 +1,218 @@
+\documentclass[a4paper,10pt,english]{scrartcl}
+\usepackage[utf8x]{inputenc}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{isodate}
+\usepackage{listings}
+\usepackage{xspace}
+
+
+\usepackage{mathpazo}
+\fontfamily{ppl}
+% \renewcommand{\rmdefault}{ppl} % rm
+\linespread{1.05}        % Palatino needs more leadin
+\selectfont
+
+\usepackage[]{sourcesanspro}
+% \usepackage[]{sourceserifpro} % does not support italics :S
+\usepackage[]{sourcecodepro}
+\usepackage[T1]{fontenc}
+
+
+\title{Computing Phylogenies with Phylonium}
+\author{Fabian Klötzl\\\normalsize{kloetzl@evolbio.mpg.de}}
+\date{\isodate{\today}}
+
+\lstset{
+	columns=flexible,
+	basicstyle={\ttfamily\small},
+	xleftmargin=2em,
+	breaklines
+}
+
+\newcommand{\tool}[1]{\textsf{#1}}
+\newcommand{\phylonium}{\textsf{phylonium}\xspace}
+
+\begin{document}
+
+\frenchspacing
+\maketitle
+
+
+Biology textbooks usually contain a two part workflow to reconstruct the phylogenetic history of biological sequences: % \cite{fixme}
+First, align the sequences and then use a maximum likelihood approach to find the best tree. This method worked well for many years but has become less useful as the number of sequenced genomes grew rapidly and made existing workflows computationally unfeasible. To mitigate this problem so-called \emph{alignment-free} methods have been devised that quickly estimate phylogenies from unaligned sequences at reasonable accuracy. This document explains how to use one of these tools, \phylonium, for phylogeny reconstruction. 
+
+\section{Installation}
+
+\phylonium has two runtime prerequisites: \tool{libdivsufsort} and the \tool{GNU Scientific Library} (GSL). Install them your the package manager.
+
+\begin{lstlisting}
+%  sudo apt install libdivsufsort libgsl23
+\end{lstlisting}
+
+At the moment \phylonium has to be build directly from the source code. This requires further dependencies.
+
+\begin{lstlisting}
+%  sudo apt install libdivsufsort-dev libgsl-dev build-essential automake
+\end{lstlisting}
+
+Get a local copy of \phylonium by cloning the repository:
+
+\begin{lstlisting}[language=bash]
+%  git clone https://github.com/kloetzl/phylonium
+\end{lstlisting}
+
+Change into the newly created directory and prepare the configuration of the package.
+
+\begin{lstlisting}
+%  cd phylonium
+%  autoreconf -fi
+\end{lstlisting}
+
+Now the directory contains a new file called \lstinline!configure!. This script will scan your system and configure the build procedure for \phylonium accordingly.
+
+\begin{lstlisting}
+%  ./configure
+\end{lstlisting}
+
+The configuration step fails if \tool{libdivsufsort} or the \tool{GSL} are not found. After successful configuration the program has to be compiled.
+
+\begin{lstlisting}
+%  make
+\end{lstlisting}
+
+This step compiles the source code into the executable \lstinline!phylonium! located in the \lstinline!src! subdirectory. To make it available to all users do:
+
+\begin{lstlisting}
+%  sudo make install
+\end{lstlisting}
+
+
+\section{Basic Usage}
+
+After \phylonium has been built, we can check whether it has been correctly installed. For that simply call \phylonium without any arguments.
+
+\begin{lstlisting}
+%  phylonium
+Usage: phylonium [OPTIONS] FILES...
+	FILES... can be any sequence of FASTA files, each file representing one genome.
+
+Options:
+  -2, --2pass          Enable two-pass algorithm
+  -b, --bootstrap=N    Print additional bootstrap matrices
+  --complete-deletion  Delete the whole aligned column in case of gaps
+  -r FILE              Add FILE to the list of references
+  -t, --threads=N      The number of threads to be used; by default, all available processors are used
+  -v, --verbose        Print additional information
+  -h, --help           Display this help and exit
+      --version        Output version information and acknowledgments
+\end{lstlisting}
+
+\phylonium now prints the available command line arguments. The same can be achieved via \lstinline!phylonium -h!.
+
+In simplistic terms, \phylonium reads in assembled DNA sequences in FASTA format and produces a matrix of their evolutionary distances. It prints an error message if the input is malformed. All contigs belonging to the same genome are in the same input file. \phylonium uses the file name as identifier for the sequence. The final distance matrix is in PHYLIP format.
+
+To see how \phylonium works, we apply it to a set of 29~\textit{Escherichia coli} genomes. First, download and unpack them.
+
+\begin{lstlisting}
+%  wget https://github.com/EvolBioInf/life2015/raw/gh-pages/eco29.fasta.gz
+%  gunzip eco29.fasta.gz
+%  cat eco29.fasta | awk -v RS='>' 'NR>1{print ">" $0 > $1 ".fa" }'
+\end{lstlisting}
+
+Now your working directory contains 29 individual genomic files with the extension \lstinline!.fa!. We begin by comparing only two of them.
+
+\begin{lstlisting}
+%  phylonium FM180568.fa BA000007.fa 
+2
+BA000007  0.0000e+00  2.4833e-02
+FM180568  2.4833e-02  0.0000e+00
+\end{lstlisting}
+
+On the first line of the output is the number of genomes compared followed by a two-by-two matrix. Each value represents an estimated substitution rate between two sequences. As each genome is equal to itself the main diagonal consists only of zeros. So the evolutionary distance between sequences \lstinline!BA000007! (first row) and \lstinline!FM180568! (second column) is $2.4833 \cdot{10}^{-2}$ substitutions per site. Note that the matrix is symmetric. Next we execute \phylonium on the whole dataset.
+
+\begin{lstlisting}
+%  phylonium *.fa > eco29.out
+\end{lstlisting}
+
+Now the file \lstinline!eco29.out! contains a distance matrix of size 29 by 29, which can be summarized as a phylogeny using the neighbor-joining algorithm implemented in, for example, my \tool{mat tools}\footnote{\url{https://github.com/kloetzl/mattools}}.
+
+\begin{lstlisting}
+%  mat nj eco29.out > eco29.tree
+%  cat eco29.tree
+((((((((AE005174:-0.000019,BA000007:1.8692e-04)100:0.000738,CP001846:7.8208e-04)100:0.005264,CP000034:7.1481e-03)100:0.002179,((((((AE014075:0.003805,CU928162:4.0811e-03)30:0.000106,((CP000243:0.000287,CP000468:2.8884e-04)92:0.000463,CU928161:6.3318e-04)100:3.3526e-03)84:0.000290,CP000247:4.3563e-03)100:0.001366,FM180568:5.7901e-03)100:0.006161,(CU928164:0.006473,CP000970:6.6616e-03)100:2.9194e-03)100:0.001377,CU928163:9.6085e-03)100:3.7311e-03)100:0.001825,((((AP009048:0.000021,U00096:-1.2518e-05)100:0.000054,CP001396:5.3536e-05)42:0.000005,CP000948:-1.0385e-05)100:0.004145,(CP000802:0.002660,CP000946:3.0406e-03)100:8.5194e-04)100:1.8943e-03)60:0.000689,((AE005674:0.000240,AE014073:7.9630e-05)100:0.000401,CP000266:5.1491e-04)100:6.4057e-03)78:0.000581,((AP009240:0.003100,CU928160:2.7860e-03)100:0.000288,CP000800:3.2921e-03)100:1.9029e-03)89:0.000362,CP000038:4.6574e-03,(CP001063:0.001311,CP000036:1.3202e-03)100:3.6383e-03);
+\end{lstlisting}
+
+This phylogeny in Newick format, which I am here visualizing using the ETE Toolkit\footnote{\url{http://etetoolkit.org/}}.
+
+\begin{figure}
+  \begin{center}
+    \includegraphics[width=0.9\linewidth]{eco29.pdf}
+  \end{center}
+  \caption{A phylogeny of 29 \textit{Escherichia coli} and \textit{Shigella} genomes; This phylogeny was computed using \tool{phylonium} default arguments, neighbor joining and then visualized with ETE.}
+\end{figure}
+
+
+\section{Picking a Reference}
+
+Internally, \phylonium \emph{aligns} all sequences to a reference. This simplified alignment is then used to estimate the rate of substitutions on homologous regions. The reference can  impact the accuracy of the phylogeny. With the \lstinline!--verbose! switch \phylonium prints the reference it has picked automatically.
+
+\begin{lstlisting}
+%  phylonium *.fa --verbose
+chosen reference: AP009240
+ref: AP009240
+length: 4887515
+aligning took 1808ms.
+...
+\end{lstlisting}
+
+It may be beneficial to explicitly set the reference, for instance if the data set contains an assembly of the type strain. This can is done with the \lstinline!-r! argument. If multiple references are supplied, \phylonium combines the results of the alignments.
+
+\begin{lstlisting}
+%  phylonium *.fa --verbose -r FM180568.fa
+ref: FM180568
+length: 4965553
+aligning took 1943ms.
+...
+\end{lstlisting}
+
+For as yet unexplored data sets it may be hard to choose a good reference. For these cases \phylonium comes with the \lstinline!--2pass! option. If enabled, after a first run, \phylonium picks a central sequence as a reference, which is a reasonable choice for most data sets.
+
+\begin{lstlisting}
+%  phylonium *.fa --verbose --2pass
+chosen reference: AP009240
+ref: AP009240
+length: 4887515
+aligning took 1886ms.
+ref: CP000948
+length: 4686135
+aligning took 1838ms.
+...
+\end{lstlisting}
+
+
+\section{Dealing with Gaps}
+
+\phylonium estimated the evolutionary distance as the number of substitutions per site.  However, substitutions are only one type of mutations. Indels frequently disturb the homology of sequences. There exist two standard methods to handle the corresponding gaps: pairwise and complete deletion. Consider the following alignment.
+
+\begin{lstlisting}[columns=fixed]
+Seq1  AACTT
+Seq2  AGGTT
+Seq3  AG-TC
+\end{lstlisting}
+
+Under pairwise deletion (the default in \phylonium) \lstinline!Seq1! is separated by two mismatches both from \lstinline!Seq2! and \lstinline!Seq3!; the difference being that there are five homologous nucleotides between \lstinline!Seq1! and \lstinline!Seq2!, whereas \lstinline!Seq1! and \lstinline!Seq3! share only four nucleotides. So the pairwise deletion model only considers gaps in the two sequences under consideration, hence the name. With complete deletion, this changes. Whenever there is a gap in the data, the whole column is masked. Thus, the above dataset becomes transformed into the following.
+
+\begin{lstlisting}[columns=fixed]
+Seq1  AA-TT
+Seq2  AG-TT
+Seq3  AG-TC
+\end{lstlisting}
+
+The distance between \lstinline!Seq1! and \lstinline!Seq3! remains unchanged; But the distance from \lstinline!Seq! to \lstinline!Seq2! changes from $\frac{2}{5}$ to $\frac{1}{4}$.
+
+Activating the \lstinline!--complete-deletion! option can be advantageous when analyzing data sets with divergent sequences. However, complete deletion biases the estimation towards conserved genetic regions. The resulting distances are often too small. 
+
+On the other hand, complete deletion can result in the loss of a large part of the input data, for example, if a single assembly, out of potentially hundreds, failed. So use complete deletion with caution.
+
+\end{document}
