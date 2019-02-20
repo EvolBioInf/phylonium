@@ -25,7 +25,7 @@ The output is a distance matrix in PHYLIP format. Use `phylip neighbor`, `mat nj
 
 # License
 
-Copyright © 2018 Fabian Klötzl  
+Copyright © 2018 - 2019 Fabian Klötzl  
 License GPLv3+: GNU GPL version 3 or later.
 
 This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law. The full license text is available at <http://gnu.org/licenses/gpl.html>.
