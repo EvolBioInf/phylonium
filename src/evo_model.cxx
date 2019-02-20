@@ -3,6 +3,7 @@
  * Copyright 2018 © Fabian Klötzl
  */
 #include "evo_model.h"
+#include "seqcmp.h"
 #include <algorithm>
 #include <assert.h>
 #include <cmath>
@@ -196,21 +197,8 @@ void evo_model::account(const char *sa, const char *sb, size_t length) noexcept
 	size_t mutations = 0;
 	size_t offset = 0;
 
-#ifdef __AVX512BW__
-#ifdef __AVX512VL__
-
-	mutations = count_subst_avx512(sa, sb, length);
+	mutations = seqcmp(sa, sb, length);
 	offset += length;
-
-#endif
-#endif
-
-#ifdef __AVX2__
-
-	mutations += count_subst_avx2(sa + offset, sb + offset, length - offset);
-	offset += length;
-
-#endif
 
 	for (; offset < length; offset++) {
 		if (UNLIKELY(sa[offset] != sb[offset])) {
