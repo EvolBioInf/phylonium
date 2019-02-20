@@ -5,6 +5,8 @@ phylonium_CXXFLAGS = $(OPENMP_CXXFLAGS) -O2 -ggdb
 phylonium_LDADD = \
 	$(top_builddir)/libs/libcompat.a \
 	$(top_builddir)/libs/libpfasta.a \
+	$(top_builddir)/libs/librevseqcmp.a \
+	$(top_builddir)/libs/librevseqcmp_ssse3.a \
 	$(top_builddir)/libs/libseqcmp.a \
 	$(top_builddir)/libs/libseqcmp_sse2.a \
 	$(top_builddir)/libs/libseqcmp_avx2.a \

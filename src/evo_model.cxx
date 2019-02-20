@@ -11,58 +11,7 @@
 #include <iterator>
 #include <numeric>
 #include "seqcmp.h"
-
-constexpr bool is_complement(char c, char d);
-
-#ifdef __SSE2__
-#ifdef __SSSE3__
-#include <emmintrin.h>
-#include <tmmintrin.h>
-
-size_t intr(const char *self, const char *other, size_t length)
-{
-	size_t substitutions = 0;
-	size_t offset = 0;
-
-	size_t vec_offset = 0;
-	size_t vec_length = length / sizeof(__m128i);
-
-	substitutions += sizeof(__m128i) * vec_length;
-	for (; vec_offset < vec_length; vec_offset++) {
-		__m128i b;
-		memcpy(&b, self + vec_offset * sizeof(__m128i), sizeof(b));
-		__m128i o;
-		size_t pos = length - (vec_offset + 1) * sizeof(__m128i);
-		memcpy(&o, other + pos, sizeof(o));
-
-		__m128i mask =
-			_mm_set_epi8(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
-		__m128i reversed = _mm_shuffle_epi8(o, mask);
-
-		__m128i v1 = _mm_xor_si128(b, reversed);
-		__m128i mask6 = _mm_set1_epi8(6);
-		__m128i v2 = _mm_and_si128(v1, mask6);
-		__m128i mask4 = _mm_set1_epi8(4);
-		__m128i v3 = _mm_cmpeq_epi8(v2, mask4);
-
-		unsigned int vmask = _mm_movemask_epi8(v3);
-		// substitutions += sizeof(__m128i) - __builtin_popcount(vmask);
-		substitutions -= __builtin_popcount(vmask);
-	}
-
-	offset += vec_offset * sizeof(__m128i);
-
-	for (; offset < length; offset++) {
-		if (!is_complement(self[offset], other[length - 1 - offset])) {
-			substitutions++;
-		}
-	}
-
-	return substitutions;
-}
-
-#endif
-#endif
+#include "revseqcmp.h"
 
 gsl_rng *RNG;
 
@@ -108,17 +57,6 @@ void evo_model::account(const char *sa, const char *sb, size_t length) noexcept
 	substitutions += mutations;
 }
 
-/** @brief Check whether two characters are complementary.
- * @param c - One nucleotide.
- * @param d - A nucleotide from the other sequence.
- * @returns true iff the two nucleotides are complements.
- */
-constexpr bool is_complement(char c, char d)
-{
-	auto xorr = c ^ d;
-	return (xorr & 6) == 4;
-}
-
 /** @brief Compare one sequence with the reverse complement of another.
  * @param sa - The forward sequence.
  * @param sb - The sequence of which the reverse complement is of interest.
@@ -129,21 +67,7 @@ constexpr bool is_complement(char c, char d)
 void evo_model::account_rev(const char *sa, const char *sb, size_t b_offset,
 							size_t length) noexcept
 {
-	size_t mutations = 0;
-	size_t offset = 0;
-
-#ifdef __SSE2__
-#ifdef __SSSE3__
-	mutations += intr(sa, sb + b_offset - length, length);
-	offset += length;
-#endif
-#endif
-
-	for (; offset < length; offset++) {
-		if (UNLIKELY(!is_complement(sa[offset], sb[b_offset - 1 - offset]))) {
-			mutations++;
-		}
-	}
+	size_t mutations = revseqcmp(sa, sb + b_offset - length, length);
 
 	homologs += length;
 	substitutions += mutations;
