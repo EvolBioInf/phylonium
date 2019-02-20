@@ -117,16 +117,21 @@ static inline int dynstr_init(dynstr *ds, struct pfasta_parser *pp);
 static inline size_t dynstr_len(const dynstr *ds);
 static inline void dynstr_free(dynstr *ds);
 static inline int dynstr_append(dynstr *ds, const char *str, size_t length,
-                                struct pfasta_parser *pp);
+								struct pfasta_parser *pp);
 
-static inline int my_isspace(int c) {
+static inline int my_isspace(int c)
+{
 	// ascii whitespace
 	return (c >= '\t' && c <= '\r') || (c == ' ');
 }
 
-const char *pfasta_version(void) { return VERSION; }
+const char *pfasta_version(void)
+{
+	return VERSION;
+}
 
-int buffer_init(struct pfasta_parser *pp) {
+int buffer_init(struct pfasta_parser *pp)
+{
 	int return_code = 0;
 
 	pp->buffer = malloc(BUFFER_SIZE);
@@ -139,7 +144,8 @@ cleanup:
 	return return_code;
 }
 
-int buffer_read(struct pfasta_parser *pp) {
+int buffer_read(struct pfasta_parser *pp)
+{
 	int return_code = NO_ERROR;
 	ssize_t count = read(pp->file_descriptor, pp->buffer, BUFFER_SIZE);
 
@@ -158,15 +164,23 @@ cleanup:
 	return return_code;
 }
 
-int buffer_peek(struct pfasta_parser *pp) {
+int buffer_peek(struct pfasta_parser *pp)
+{
 	return LIKELY(pp->read_ptr < pp->fill_ptr) ? *pp->read_ptr : EOF;
 }
 
-char *buffer_begin(struct pfasta_parser *pp) { return pp->read_ptr; }
+char *buffer_begin(struct pfasta_parser *pp)
+{
+	return pp->read_ptr;
+}
 
-char *buffer_end(struct pfasta_parser *pp) { return pp->fill_ptr; }
+char *buffer_end(struct pfasta_parser *pp)
+{
+	return pp->fill_ptr;
+}
 
-inline int buffer_advance(struct pfasta_parser *pp, size_t steps) {
+inline int buffer_advance(struct pfasta_parser *pp, size_t steps)
+{
 	int return_code = 0;
 
 	pp->read_ptr += steps;
@@ -180,15 +194,18 @@ cleanup:
 	return return_code;
 }
 
-int buffer_is_empty(const struct pfasta_parser *pp) {
+int buffer_is_empty(const struct pfasta_parser *pp)
+{
 	return pp->read_ptr == pp->fill_ptr;
 }
 
-int buffer_is_eof(const struct pfasta_parser *pp) {
+int buffer_is_eof(const struct pfasta_parser *pp)
+{
 	return pp->read_ptr > pp->fill_ptr;
 }
 
-char *find_first_space(const char *begin, const char *end) {
+char *find_first_space(const char *begin, const char *end)
+{
 	size_t offset = 0;
 	size_t length = end - begin;
 
@@ -214,7 +231,7 @@ char *find_first_space(const char *begin, const char *end) {
 		vec_type v3 = _mm_cmpeq_epi8(chunk, all_space);
 
 		unsigned int vmask = (_mm_movemask_epi8(v1) & _mm_movemask_epi8(v2)) |
-		                     _mm_movemask_epi8(v3);
+							 _mm_movemask_epi8(v3);
 
 		if (UNLIKELY(vmask)) {
 			offset += __builtin_ctz(vmask);
@@ -232,7 +249,8 @@ char *find_first_space(const char *begin, const char *end) {
 	return (char *)begin + offset;
 }
 
-char *find_first_not_space(const char *begin, const char *end) {
+char *find_first_not_space(const char *begin, const char *end)
+{
 	size_t offset = 0;
 	size_t length = end - begin;
 
@@ -242,7 +260,8 @@ char *find_first_not_space(const char *begin, const char *end) {
 	return (char *)begin + offset;
 }
 
-size_t count_newlines(const char *begin, const char *end) {
+size_t count_newlines(const char *begin, const char *end)
+{
 	size_t offset = 0;
 	size_t length = end - begin;
 	size_t newlines = 0;
@@ -254,7 +273,8 @@ size_t count_newlines(const char *begin, const char *end) {
 	return newlines;
 }
 
-static int copy_word(struct pfasta_parser *pp, dynstr *target) {
+static int copy_word(struct pfasta_parser *pp, dynstr *target)
+{
 	int return_code = 0;
 
 	while (LIKELY(!my_isspace(buffer_peek(pp)))) {
@@ -274,7 +294,8 @@ cleanup:
 	return return_code;
 }
 
-static int skip_whitespace(struct pfasta_parser *pp) {
+static int skip_whitespace(struct pfasta_parser *pp)
+{
 	int return_code = 0;
 
 	while (my_isspace(buffer_peek(pp))) {
@@ -293,7 +314,8 @@ cleanup:
 	return return_code;
 }
 
-struct pfasta_parser pfasta_init(int file_descriptor) {
+struct pfasta_parser pfasta_init(int file_descriptor)
+{
 	int return_code = 0;
 	struct pfasta_parser pp = {0};
 	pp.line_number = 1;
@@ -319,7 +341,8 @@ cleanup:
 	return pp;
 }
 
-struct pfasta_record pfasta_read(struct pfasta_parser *pp) {
+struct pfasta_record pfasta_read(struct pfasta_parser *pp)
+{
 	int return_code = 0;
 	struct pfasta_record pr = {0};
 
@@ -341,7 +364,8 @@ cleanup:
 	return pr;
 }
 
-int pfasta_read_name(struct pfasta_parser *pp, struct pfasta_record *pr) {
+int pfasta_read_name(struct pfasta_parser *pp, struct pfasta_record *pr)
+{
 	int return_code = 0;
 
 	dynstr name;
@@ -351,7 +375,7 @@ int pfasta_read_name(struct pfasta_parser *pp, struct pfasta_record *pr) {
 	assert(!buffer_is_empty(pp));
 	if (buffer_peek(pp) != '>') {
 		PF_FAIL_STR(pp, "Expected '>' but found '%c' on line %zu.",
-		            buffer_peek(pp), pp->line_number);
+					buffer_peek(pp), pp->line_number);
 	}
 
 	int check = buffer_advance(pp, 1); // skip >
@@ -377,7 +401,8 @@ cleanup:
 	return return_code;
 }
 
-int pfasta_read_comment(struct pfasta_parser *pp, struct pfasta_record *pr) {
+int pfasta_read_comment(struct pfasta_parser *pp, struct pfasta_record *pr)
+{
 	int return_code = 0;
 
 	if (buffer_peek(pp) == '\n') {
@@ -411,7 +436,7 @@ int pfasta_read_comment(struct pfasta_parser *pp, struct pfasta_record *pr) {
 label_eof:
 	if (buffer_is_eof(pp))
 		PF_FAIL_STR(pp, "Unexpected EOF in comment on line %zu.",
-		            pp->line_number);
+					pp->line_number);
 
 	pr->comment_length = dynstr_len(&comment);
 	pr->comment = dynstr_move(&comment);
@@ -423,7 +448,8 @@ cleanup:
 	return return_code;
 }
 
-int pfasta_read_sequence(struct pfasta_parser *pp, struct pfasta_record *pr) {
+int pfasta_read_sequence(struct pfasta_parser *pp, struct pfasta_record *pr)
+{
 	int return_code = 0;
 
 	dynstr sequence;
@@ -447,7 +473,7 @@ int pfasta_read_sequence(struct pfasta_parser *pp, struct pfasta_record *pr) {
 		// optimize for more common case
 		ptrdiff_t length = buffer_end(pp) - buffer_begin(pp);
 		if (LIKELY(length >= 2 && buffer_begin(pp)[0] == '\n' &&
-		           buffer_begin(pp)[1] > ' ')) {
+				   buffer_begin(pp)[1] > ' ')) {
 			pp->read_ptr++; // nasty hack
 			pp->line_number += 1;
 		} else {
@@ -471,7 +497,8 @@ cleanup:
 	return return_code;
 }
 
-void pfasta_record_free(struct pfasta_record *pr) {
+void pfasta_record_free(struct pfasta_record *pr)
+{
 	if (!pr) return;
 	free(pr->name);
 	free(pr->comment);
@@ -479,7 +506,8 @@ void pfasta_record_free(struct pfasta_record *pr) {
 	pr->name = pr->comment = pr->sequence = NULL;
 }
 
-void pfasta_free(struct pfasta_parser *pp) {
+void pfasta_free(struct pfasta_parser *pp)
+{
 	if (!pp) return;
 	free(pp->buffer);
 	pp->buffer = NULL;
@@ -491,7 +519,8 @@ void pfasta_free(struct pfasta_parser *pp) {
  *
  * @returns 0 iff successful.
  */
-static inline int dynstr_init(dynstr *ds, struct pfasta_parser *pp) {
+static inline int dynstr_init(dynstr *ds, struct pfasta_parser *pp)
+{
 	int return_code = 0;
 
 	*ds = (dynstr){NULL, 0, 0};
@@ -515,7 +544,8 @@ cleanup:
  * @returns 0 iff successful.
  */
 static inline int dynstr_append(dynstr *ds, const char *str, size_t length,
-                                struct pfasta_parser *pp) {
+								struct pfasta_parser *pp)
+{
 	int return_code = 0;
 	size_t required = ds->count + length;
 
@@ -537,7 +567,8 @@ cleanup:
 }
 
 /** @brief Frees a dynamic string. */
-static inline void dynstr_free(dynstr *ds) {
+static inline void dynstr_free(dynstr *ds)
+{
 	if (!ds) return;
 	free(ds->str);
 	*ds = (dynstr){NULL, 0, 0};
@@ -550,7 +581,8 @@ static inline void dynstr_free(dynstr *ds) {
  *
  * @returns a `char*` to a standard null-terminated string.
  */
-static inline char *dynstr_move(dynstr *ds) {
+static inline char *dynstr_move(dynstr *ds)
+{
 	char *out = pfasta_reallocarray(ds->str, ds->count + 1, 1);
 	if (!out) {
 		out = ds->str;
@@ -561,14 +593,18 @@ static inline char *dynstr_move(dynstr *ds) {
 }
 
 /** @brief Returns the current length of the dynamic string. */
-static inline size_t dynstr_len(const dynstr *ds) { return ds->count; }
+static inline size_t dynstr_len(const dynstr *ds)
+{
+	return ds->count;
+}
 
 __attribute__((weak)) void *reallocarray(void *ptr, size_t nmemb, size_t size);
 
 /**
  * @brief Unsafe fallback in case reallocarray isn't provided by the stdlib.
  */
-void *pfasta_reallocarray(void *ptr, size_t nmemb, size_t size) {
+void *pfasta_reallocarray(void *ptr, size_t nmemb, size_t size)
+{
 	if (reallocarray == NULL) {
 		return realloc(ptr, nmemb * size);
 	} else {
