@@ -3,7 +3,6 @@
  * Copyright 2018 © Fabian Klötzl
  */
 #include "evo_model.h"
-#include "seqcmp.h"
 #include <algorithm>
 #include <assert.h>
 #include <cmath>
@@ -11,100 +10,9 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include "seqcmp.h"
 
 constexpr bool is_complement(char c, char d);
-
-#ifdef __AVX512BW__
-#ifdef __AVX512VL__
-#include <immintrin.h>
-
-typedef __m256i vec_type;
-
-size_t count_subst_avx512(const char *self, const char *other, size_t length)
-{
-	size_t substitutions = 0;
-
-	const size_t vec_bytes = sizeof(vec_type);
-	size_t vec_offset = 0;
-	size_t vec_length = length / vec_bytes;
-
-	size_t equal = 0;
-	for (; vec_offset < vec_length; vec_offset++) {
-		vec_type self_chunk;
-		vec_type other_chunk;
-		memcpy(&self_chunk, self + vec_offset * vec_bytes, vec_bytes);
-		memcpy(&other_chunk, other + vec_offset * vec_bytes, vec_bytes);
-
-		unsigned int vmask = _mm256_cmpeq_epi8_mask(self_chunk, other_chunk);
-		equal += __builtin_popcount(vmask);
-	}
-
-	substitutions = vec_length * vec_bytes - equal;
-
-	size_t offset = vec_offset * vec_bytes;
-	for (; offset < length; offset++) {
-		if (self[offset] != other[offset]) {
-			substitutions++;
-		}
-	}
-
-	return substitutions;
-}
-
-#endif
-#endif
-
-#ifdef __AVX2__
-#include <immintrin.h>
-
-typedef __m256i vec_type;
-
-size_t count_subst_avx2(const char *self, const char *other, size_t length)
-{
-	size_t substitutions = 0;
-	size_t offset = 0;
-
-	const size_t vec_bytes = sizeof(vec_type);
-	size_t vec_offset = 0;
-	size_t vec_length = (length / vec_bytes) & ~(size_t)1; // round down
-
-	size_t equal = 0;
-	for (; vec_offset < vec_length; vec_offset++) {
-		vec_type self_chunk;
-		vec_type other_chunk;
-		memcpy(&self_chunk, self + vec_offset * vec_bytes, vec_bytes);
-		memcpy(&other_chunk, other + vec_offset * vec_bytes, vec_bytes);
-
-		vec_type comp = _mm256_cmpeq_epi8(self_chunk, other_chunk);
-
-		unsigned int vmask = _mm256_movemask_epi8(comp);
-		equal += __builtin_popcount(vmask);
-
-		vec_offset++;
-		// second pass
-		memcpy(&self_chunk, self + vec_offset * vec_bytes, vec_bytes);
-		memcpy(&other_chunk, other + vec_offset * vec_bytes, vec_bytes);
-
-		comp = _mm256_cmpeq_epi8(self_chunk, other_chunk);
-
-		vmask = _mm256_movemask_epi8(comp);
-		equal += __builtin_popcount(vmask);
-	}
-
-	substitutions = vec_offset * vec_bytes - equal;
-
-	offset += vec_offset * vec_bytes;
-
-	for (; offset < length; offset++) {
-		if (self[offset] != other[offset]) {
-			substitutions++;
-		}
-	}
-
-	return substitutions;
-}
-
-#endif
 
 #ifdef __SSE2__
 #ifdef __SSSE3__
@@ -194,17 +102,7 @@ void evo_model::account(char a, char b) noexcept
  */
 void evo_model::account(const char *sa, const char *sb, size_t length) noexcept
 {
-	size_t mutations = 0;
-	size_t offset = 0;
-
-	mutations = seqcmp(sa, sb, length);
-	offset += length;
-
-	for (; offset < length; offset++) {
-		if (UNLIKELY(sa[offset] != sb[offset])) {
-			mutations++;
-		}
-	}
+	size_t mutations = seqcmp(sa, sb, length);
 
 	homologs += length;
 	substitutions += mutations;
