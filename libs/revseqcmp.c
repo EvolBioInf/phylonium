@@ -33,7 +33,7 @@ revseqcmp_fn *revseqcmp_select(void)
 	// https://gcc.gnu.org/onlinedocs/gcc/x86-Built-in-Functions.html
 	__builtin_cpu_init();
 
-	if (__builtin_cpu_supports("ssse3")) {
+	if (__builtin_cpu_supports("popcnt") && __builtin_cpu_supports("ssse3")) {
 		return revseqcmp_ssse3;
 	} else {
 		return revseqcmp_generic;
