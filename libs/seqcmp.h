@@ -17,4 +17,3 @@ typedef size_t(seqcmp_fn)(const char *begin, const char *other, size_t length);
 #ifdef __cplusplus
 }
 #endif
-
