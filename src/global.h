@@ -4,7 +4,13 @@
  */
 #include <cstdlib>
 
-enum flags { none, verbose, extra_verbose, complete_deletion = 4 };
+enum flags {
+	none,
+	verbose,
+	extra_verbose,
+	complete_deletion = 4,
+	print_progress = 8
+};
 extern int FLAGS;
 extern int THREADS;
 extern int RETURN_CODE;

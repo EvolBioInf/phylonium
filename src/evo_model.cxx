@@ -10,8 +10,8 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
-#include "seqcmp.h"
 #include "revseqcmp.h"
+#include "seqcmp.h"
 
 gsl_rng *RNG;
 

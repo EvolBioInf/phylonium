@@ -85,11 +85,14 @@ int main(int argc, char *argv[])
 	bool two_pass = false;
 	auto reference_names = std::vector<std::string>();
 
+	enum { P_AUTO, P_NEVER, P_ALWAYS } progress = P_AUTO;
+
 	static struct option long_options[] = {
 		{"2pass", no_argument, NULL, '2'},
 		{"bootstrap", required_argument, NULL, 'b'},
 		{"complete-deletion", no_argument, NULL, 0},
 		{"help", no_argument, NULL, 'h'},
+		{"progress", optional_argument, NULL, 0},
 		{"threads", required_argument, NULL, 't'},
 		{"verbose", no_argument, NULL, 'v'},
 		{"version", no_argument, &version_flag, 1},
@@ -112,9 +115,24 @@ int main(int argc, char *argv[])
 
 		switch (c) {
 			case 0: {
-				if (std::string(long_options[option_index].name) ==
-					"complete-deletion") {
+				auto arg_str = std::string(long_options[option_index].name);
+				if (arg_str == "complete-deletion") {
 					FLAGS |= flags::complete_deletion;
+					break;
+				}
+				if (arg_str == "progress") {
+					if (!optarg || strcasecmp(optarg, "always") == 0) {
+						progress = P_ALWAYS;
+					} else if (strcasecmp(optarg, "auto") == 0) {
+						progress = P_AUTO;
+					} else if (strcasecmp(optarg, "never") == 0) {
+						progress = P_NEVER;
+					} else {
+						warnx("invalid argument to --progress '%s'. Expected "
+							  "one of 'auto', 'always', or 'never'.",
+							  optarg);
+					}
+					break;
 				}
 				break;
 			}
@@ -185,6 +203,14 @@ int main(int argc, char *argv[])
 
 	if (version_flag) {
 		version();
+	}
+
+	// determine whether to print a progress bar
+	if (progress == P_AUTO) {
+		progress = isatty(STDERR_FILENO) ? P_ALWAYS : P_NEVER;
+	}
+	if (progress == P_ALWAYS) {
+		FLAGS |= flags::print_progress;
 	}
 
 	argc -= optind;

@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <chrono>
 #include <cmath>
 #include <cstring>
 #include <iostream>
@@ -527,7 +526,6 @@ std::vector<evo_model> process(const sequence &subject,
 {
 
 	auto N = queries.size();
-	auto start_time = std::chrono::steady_clock::now();
 	auto ref = esa(subject); // seq + # + reverse
 	auto homologies = std::vector<std::vector<homology>>(N);
 
@@ -536,8 +534,16 @@ std::vector<evo_model> process(const sequence &subject,
 
 	if (FLAGS & flags::verbose) {
 		std::cerr << "ref: " << subject.get_name() << std::endl;
-		std::cerr << "length: " << subject.get_nucl().size() << std::endl;
 	}
+
+	int print_progress = FLAGS & flags::print_progress;
+
+	if (print_progress) {
+		fprintf(stderr, "Mapping %zu sequences: %5.1f%% (%zu/%zu)", N, 0.0,
+				(size_t)0, N);
+	}
+
+	size_t progress_counter = 0;
 
 // now compare every sequence to the subject
 #pragma omp parallel for num_threads(THREADS)
@@ -554,15 +560,21 @@ std::vector<evo_model> process(const sequence &subject,
 
 #pragma omp critical
 		homologies[j] = std::move(hvlocal);
+
+#pragma omp atomic
+		progress_counter++;
+
+		if (print_progress) {
+			double progress = 100.0 * (double)progress_counter / N;
+
+#pragma omp critical
+			fprintf(stderr, "\rMapping %zu sequences: %5.1f%% (%zu/%zu)", N,
+					progress, progress_counter, N);
+		}
 	}
 
-	if (FLAGS & flags::verbose) {
-		auto end_time = std::chrono::steady_clock::now();
-		std::cerr << "aligning took "
-				  << std::chrono::duration_cast<std::chrono::milliseconds>(
-						 end_time - start_time)
-						 .count()
-				  << "ms.\n";
+	if (print_progress) {
+		fprintf(stderr, ", done.\n");
 	}
 
 	//////////////////////////////
@@ -582,13 +594,37 @@ std::vector<evo_model> process(const sequence &subject,
 		return matrix[i * N + j];
 	};
 
+	progress_counter = 0;
+
 #pragma omp parallel for num_threads(THREADS)
 	for (size_t i = 0; i < N; i++) {
 		for (size_t j = i + 1; j < N; j++) {
 
 			M(j, i) = M(i, j) =
 				compare(queries[i], homologies[i], queries[j], homologies[j]);
+
+#pragma omp atomic
+			progress_counter++;
 		}
+
+		if (print_progress) {
+			size_t local_progress_counter;
+			size_t num_comparisons = (N * N - N) / 2;
+
+#pragma omp atomic read
+			local_progress_counter = progress_counter;
+
+			double progress =
+				100.0 * (double)local_progress_counter / num_comparisons;
+
+#pragma omp critical
+			fprintf(stderr, "\rComparing the sequences: %5.1f%% (%zu/%zu)",
+					progress, local_progress_counter, num_comparisons);
+		}
+	}
+
+	if (print_progress) {
+		fprintf(stderr, ", done.\n");
 	}
 
 	return matrix;
