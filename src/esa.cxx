@@ -242,7 +242,7 @@ void esa::init_CLD()
 	pair_t *top = stack.get(); // points at the topmost filled element
 	pair_t last;
 
-	right_child(0) = m_size + 1;
+	right_child(0) = m_size;
 
 	top->idx = 0;
 	top->lcp = -1;
