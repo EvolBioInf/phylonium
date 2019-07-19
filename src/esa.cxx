@@ -38,17 +38,20 @@ constexpr char code2char(ssize_t code) noexcept
 	return '\0';
 }
 
+static std::array<ssize_t, 256> char2code_table = ([]() {
+	std::array<ssize_t, 256> char2code_table = {0};
+	std::fill(char2code_table.begin(), char2code_table.end(), (ssize_t)-1);
+	char2code_table['A'] = 0;
+	char2code_table['C'] = 1;
+	char2code_table['G'] = 2;
+	char2code_table['T'] = 3;
+	return char2code_table;
+})();
+
 /** @brief Map a character to a two bit code. */
-constexpr ssize_t char2code(char c) noexcept
+/*constexpr*/ ssize_t char2code(char c) noexcept
 {
-	ssize_t result = -1;
-	switch (c) {
-		case 'A': result = 0; break;
-		case 'C': result = 1; break;
-		case 'G': result = 2; break;
-		case 'T': result = 3; break;
-	}
-	return result;
+	return char2code_table[c];
 }
 
 /** @brief Initializes an ESA.
