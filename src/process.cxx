@@ -580,11 +580,11 @@ std::vector<evo_model> process(const sequence &subject,
 	//////////////////////////////
 	// reduce to core genome
 
-	std::vector<std::vector<homology>> complete_deletion(
+	std::vector<std::vector<homology>> complete_delete(
 		const std::vector<std::vector<homology>> &homologies);
 
 	if (FLAGS & flags::complete_deletion) {
-		homologies = complete_deletion(homologies);
+		homologies = complete_delete(homologies);
 	}
 
 	//////////////////////////////
@@ -733,7 +733,7 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 }
 
 std::vector<std::vector<homology>>
-complete_deletion(const std::vector<std::vector<homology>> &homologies)
+complete_delete(const std::vector<std::vector<homology>> &homologies)
 {
 	auto size = homologies.size();
 	auto core_homologies = std::vector<std::vector<homology>>(size);
