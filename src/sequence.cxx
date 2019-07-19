@@ -11,6 +11,7 @@
 
 #include "sequence.h"
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <err.h>
 #include <limits.h>
@@ -97,19 +98,32 @@ std::string filter_nucl(const std::string &base)
 	std::string ret{};
 	ret.reserve(base.size());
 
+	size_t new_length = 0;
+	auto str = new char[base.size() + 1];
+
+	static std::array<char, 256> table = ([]() {
+		std::array<char, 256> table = {0};
+		table['A'] = 'A';
+		table['C'] = 'C';
+		table['G'] = 'G';
+		table['T'] = 'T';
+		table['a'] = 'A';
+		table['c'] = 'C';
+		table['g'] = 'G';
+		table['t'] = 'T';
+		return table;
+	})();
+
 	for (auto c : base) {
-		switch (c) {
-			case 'A':
-			case 'C':
-			case 'G':
-			case 'T': ret += c; break;
-			case 'a':
-			case 'c':
-			case 'g':
-			case 't': ret += std::toupper(c); break;
-			default: break;
+		char d = table[(unsigned char)c];
+		if (d) {
+			str[new_length] = d;
+			new_length++;
 		}
 	}
+
+	ret.append(str, new_length);
+	delete[] str;
 
 	return ret;
 }
