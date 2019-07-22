@@ -57,6 +57,9 @@ int THREADS = 1;
 long unsigned int BOOTSTRAP = 0;
 int RETURN_CODE = EXIT_SUCCESS;
 
+// TODO: This is a hack and should be redone at some point.
+size_t reference_index = 0;
+
 void usage(int);
 void version(void);
 
@@ -247,6 +250,7 @@ int main(int argc, char *argv[])
 			auto it = std::find(file_names.begin(), file_names.end(), ref_name);
 			auto index = it - file_names.begin();
 			references.push_back(queries[index]);
+			reference_index = index;
 		}
 	}
 
@@ -319,6 +323,7 @@ pick_second_pass(std::vector<sequence> &sequences,
 		}
 	}
 	ret.push_back(sequences[central_index]);
+	reference_index = central_index;
 
 	return ret;
 }
@@ -350,6 +355,10 @@ pick_first_pass(std::vector<sequence> &sequences)
 					 });
 	std::swap(ret[0], ret[ret.size() / 2]);
 	ret.erase(ret.begin() + 1, ret.end());
+
+	// recover which element the reference was in the original array
+	auto it = std::find(sequences.begin(), sequences.end(), ret[0].get());
+	reference_index = it - sequences.begin();
 
 	if (FLAGS & flags::verbose) {
 		std::cerr << "chosen reference: " << ret[0].get().get_name()

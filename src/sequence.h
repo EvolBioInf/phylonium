@@ -32,6 +32,11 @@ class sequence
 
 	std::string to_fasta() const;
 
+	bool operator==(const sequence &other) const
+	{
+		return name == other.name && nucl == other.nucl;
+	}
+
 	/** @brief Returns the length of the sequence.
 	 * @returns the length of the sequence.
 	 */

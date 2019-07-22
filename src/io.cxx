@@ -22,6 +22,8 @@
 #include "global.h"
 #include "sequence.h"
 
+extern size_t reference_index;
+
 /** @brief extracts the genome name from a file path
  *
  * We try to be clever about the genome name. Given the file
@@ -199,8 +201,20 @@ void print_matrix(const std::vector<sequence> &queries,
 		}
 	}
 
+	size_t aln_aligned = 0;
+	size_t aln_total = 0;
+	for (size_t i = 0; i < N; i++) {
+		if (i == reference_index) continue;
+
+		auto index = reference_index * N + i;
+		aln_aligned += matrix[index].total();
+		aln_total += queries[i].size();
+	}
+
 	if (FLAGS & flags::verbose) {
-		std::cerr << "avg coverage: " << sum / counter << std::endl;
+		std::cerr << "avg coverage:\t" << sum / counter << std::endl;
+		std::cerr << "alignment:\t" << aln_aligned << "\t" << aln_total << "\t"
+				  << aln_aligned / (double)aln_total << std::endl;
 	}
 }
 
