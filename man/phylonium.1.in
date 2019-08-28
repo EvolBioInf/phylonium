@@ -22,7 +22,7 @@ After a first run a 'central' sequence is chosen as reference for the second pas
 Compute multiple distance matrices, with \fIn-1\fR bootstrapped from the first. See the paper Klötzl & Haubold (2016) for a detailed explanation.
 .TP
 \fB\-r\fR \fIFILE\fR
-Define the reference sequence. If multiple references are given the evolutionary distance computed from the most homologous nucleotides is printed.
+Define the reference sequence.
 .TP
 \fB\-t\fR \fIINT\fR, \fB\-\-threads\fR=\fIINT\fR
 The number of threads to be used; by default, all available processors are used.

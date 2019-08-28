@@ -65,13 +65,11 @@ void version(void);
 
 using mat_type = std::vector<evo_model>;
 
-std::vector<std::reference_wrapper<sequence>>
-pick_second_pass(std::vector<sequence> &sequences, const mat_type &matrix);
-std::vector<std::reference_wrapper<sequence>>
-pick_first_pass(std::vector<sequence> &sequences);
-void cleanup_names(std::vector<std::string> &reference_names,
+size_t pick_second_pass(std::vector<sequence> &sequences,
+						const mat_type &matrix);
+size_t pick_first_pass(std::vector<sequence> &sequences);
+void cleanup_names(const std::string &reference_name,
 				   std::vector<std::string> &file_names);
-mat_type merge(const std::vector<mat_type> &matrices);
 
 int main(int argc, char *argv[])
 {
@@ -86,7 +84,7 @@ int main(int argc, char *argv[])
 
 	int version_flag = 0;
 	bool two_pass = false;
-	auto reference_names = std::vector<std::string>();
+	auto reference_name = std::string{};
 
 	enum { P_AUTO, P_NEVER, P_ALWAYS } progress = P_AUTO;
 
@@ -161,7 +159,7 @@ int main(int argc, char *argv[])
 			}
 			case 'h': usage(EXIT_SUCCESS); break;
 			case 'r': {
-				reference_names.push_back(optarg);
+				reference_name = optarg;
 				break;
 			}
 			case 't': {
@@ -222,7 +220,9 @@ int main(int argc, char *argv[])
 	auto file_names = std::vector<std::string>(argv, argv + argc);
 
 	// add missing reference names to file names
-	cleanup_names(reference_names, file_names);
+	if (reference_name != "") {
+		cleanup_names(reference_name, file_names);
+	}
 
 	if (file_names.size() < 2) {
 		usage(EXIT_FAILURE);
@@ -242,41 +242,24 @@ int main(int argc, char *argv[])
 	}
 
 	// avoid copying sequences
-	auto references = std::vector<std::reference_wrapper<sequence>>();
-	if (reference_names.empty()) {
-		references = pick_first_pass(queries);
+	if (reference_name == "") {
+		pick_first_pass(queries);
 	} else {
-		for (auto ref_name : reference_names) {
-			auto it = std::find(file_names.begin(), file_names.end(), ref_name);
-			auto index = it - file_names.begin();
-			references.push_back(queries[index]);
-			reference_index = index;
-		}
+		auto it =
+			std::find(file_names.begin(), file_names.end(), reference_name);
+		auto index = it - file_names.begin();
+		reference_index = index;
 	}
 
-	auto matrices = std::vector<mat_type>();
-
-	for (const auto &subject : references) {
-		auto matrix = process(subject, queries);
-		matrices.push_back(matrix);
-	}
-
-	auto super_matrix = merge(matrices);
+	auto matrix = process(queries[reference_index], queries);
 
 	if (two_pass) {
-		auto references = pick_second_pass(queries, super_matrix);
+		auto new_reference_index = pick_second_pass(queries, matrix);
+		auto new_matrix = process(queries[new_reference_index], queries);
 
-		auto new_matrices = std::vector<mat_type>();
-
-		for (const auto &subject : references) {
-			auto matrix = process(subject, queries);
-			new_matrices.push_back(matrix);
-		}
-
-		auto new_super_matrix = merge(new_matrices);
-		print_matrix(queries, new_super_matrix);
+		print_matrix(queries, new_matrix);
 	} else {
-		print_matrix(queries, super_matrix);
+		print_matrix(queries, matrix);
 	}
 
 	return RETURN_CODE;
@@ -296,11 +279,10 @@ int main(int argc, char *argv[])
  *
  * @param sequences - The input sequences.
  * @param matrix - The distance matrix from the first pass.
- * @returns a new reference.
+ * @returns a new reference (index).
  */
-std::vector<std::reference_wrapper<sequence>>
-pick_second_pass(std::vector<sequence> &sequences,
-				 const std::vector<evo_model> &matrix)
+size_t pick_second_pass(std::vector<sequence> &sequences,
+						const std::vector<evo_model> &matrix)
 {
 	auto ret = std::vector<std::reference_wrapper<sequence>>();
 
@@ -325,7 +307,7 @@ pick_second_pass(std::vector<sequence> &sequences,
 	ret.push_back(sequences[central_index]);
 	reference_index = central_index;
 
-	return ret;
+	return central_index;
 }
 
 /** @brief Picks the references for the first pass according to some criterion.
@@ -340,10 +322,9 @@ pick_second_pass(std::vector<sequence> &sequences,
  * At the moment a sequence of medium length is chosen.
  *
  * @param sequences - The input sequences.
- * @returns a new reference.
+ * @returns a new reference (index).
  */
-std::vector<std::reference_wrapper<sequence>>
-pick_first_pass(std::vector<sequence> &sequences)
+size_t pick_first_pass(std::vector<sequence> &sequences)
 {
 	// pick a reference by some criterion.
 	auto ret = std::vector<std::reference_wrapper<sequence>>(sequences.begin(),
@@ -353,71 +334,27 @@ pick_first_pass(std::vector<sequence> &sequences)
 					 [](const sequence &a, const sequence &b) {
 						 return a.size() < b.size();
 					 });
-	std::swap(ret[0], ret[ret.size() / 2]);
-	ret.erase(ret.begin() + 1, ret.end());
+
+	auto &reference = ret[ret.size() / 2].get();
 
 	// recover which element the reference was in the original array
-	auto it = std::find(sequences.begin(), sequences.end(), ret[0].get());
+	auto it = std::find(sequences.begin(), sequences.end(), reference);
 	reference_index = it - sequences.begin();
 
 	if (FLAGS & flags::verbose) {
-		std::cerr << "chosen reference: " << ret[0].get().get_name()
-				  << std::endl;
+		std::cerr << "chosen reference: " << reference.get_name() << std::endl;
 	}
 
-	return ret;
+	return reference_index;
 }
 
-/** @brief Remove duplicates from a vector.
- * @param vec - in out parameter.
- */
-void remove_duplicates(std::vector<std::string> &vec)
-{
-	auto split = std::unique(vec.begin(), vec.end());
-	vec.erase(split, vec.end());
-}
-
-void cleanup_names(std::vector<std::string> &reference_names,
+void cleanup_names(const std::string &reference_name,
 				   std::vector<std::string> &file_names)
 {
-	std::sort(reference_names.begin(), reference_names.end());
+	file_names.push_back(reference_name);
 	std::sort(file_names.begin(), file_names.end());
-
-	remove_duplicates(reference_names);
-	remove_duplicates(file_names);
-
-	auto all_names = std::vector<std::string>();
-	all_names.reserve(std::max(reference_names.size(), file_names.size()));
-
-	// merge all_names
-	std::set_union(reference_names.begin(), reference_names.end(),
-				   file_names.begin(), file_names.end(),
-				   std::back_inserter(all_names));
-
-	remove_duplicates(all_names);
-
-	// output
-	file_names.swap(all_names);
-}
-
-/** @brief Merge multiple matrices by choosing the entry with the most
- * homologous nucleotides per cell.
- *
- * @param matrices - The matrices to merge.
- * @returns a new super matrix.
- */
-mat_type merge(const std::vector<mat_type> &matrices)
-{
-	auto super_matrix = mat_type(matrices[0].size());
-
-	for (const auto &matrix : matrices) {
-		for (size_t i = 0; i < matrix.size(); i++) {
-			super_matrix[i] =
-				evo_model::select_by_total(super_matrix[i], matrix[i]);
-		}
-	}
-
-	return super_matrix;
+	auto split = std::unique(file_names.begin(), file_names.end());
+	file_names.erase(split, file_names.end());
 }
 
 /** @brief Prints the usage and then exits.
@@ -435,7 +372,7 @@ void usage(int status)
 		"  -b, --bootstrap=N    Print additional bootstrap matrices\n"
 		"  --complete-deletion  Delete the whole aligned column in case of "
 		"gaps\n"
-		"  -r FILE              Add FILE to the list of references\n"
+		"  -r FILE              Set the reference genome\n"
 #ifdef _OPENMP
 		"  -t, --threads=N      The number of threads to be used; by default, "
 		"all available processors are used\n"
