@@ -530,7 +530,7 @@ std::vector<evo_model> process(const sequence &subject,
 	auto homologies = std::vector<std::vector<homology>>(N);
 
 	auto gc = gc_content(subject.get_nucl());
-	size_t threshold = min_anchor_length(RANDOM_ANCHOR_PROP, gc, ref.size());
+	size_t threshold = min_anchor_length(ANCHOR_P_VALUE, gc, ref.size());
 
 	if (FLAGS & flags::verbose) {
 		std::cerr << "ref: " << subject.get_name() << std::endl;

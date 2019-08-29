@@ -15,7 +15,7 @@ extern int FLAGS;
 extern int THREADS;
 extern int RETURN_CODE;
 
-extern double RANDOM_ANCHOR_PROP;
+extern double ANCHOR_P_VALUE;
 extern long unsigned int BOOTSTRAP;
 
 /**
