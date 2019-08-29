@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 	while (1) {
 		int option_index;
 		int c =
-			getopt_long(argc, argv, "2b:hr:t:v", long_options, &option_index);
+			getopt_long(argc, argv, "2b:hpr:t:v", long_options, &option_index);
 
 		if (c == -1) {
 			break;
@@ -158,6 +158,11 @@ int main(int argc, char *argv[])
 				break;
 			}
 			case 'h': usage(EXIT_SUCCESS); break;
+			case 'p': {
+				FLAGS |= flags::print_positions;
+				FLAGS |= flags::complete_deletion;
+				break;
+			}
 			case 'r': {
 				reference_name = optarg;
 				break;
@@ -368,6 +373,7 @@ void usage(int status)
 		"  -b, --bootstrap=N    Print additional bootstrap matrices\n"
 		"  --complete-deletion  Delete the whole aligned column in case of "
 		"gaps\n"
+		"  -p                   Print reference positions (implies complete deletion)\n"
 		"  -r FILE              Set the reference genome\n"
 #ifdef _OPENMP
 		"  -t, --threads=N      The number of threads to be used; by default, "

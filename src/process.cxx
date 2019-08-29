@@ -453,6 +453,19 @@ std::vector<evo_model> process(const sequence &subject,
 		homologies = complete_delete(homologies);
 	}
 
+	if (FLAGS & flags::print_positions) {
+		// after complete deletion all sequences are restricted to the same
+		// positions on the reference. Print those positions.
+		const auto &homos = homologies[0];
+		size_t counter = 1;
+		for (auto &h : homos) {
+			auto start = h.start();
+			auto end = h.end();
+			std::cerr << ">part" << counter++ << "\t(" << start << ".." << end << ")" << std::endl;
+			std::cerr << std::string(subject.begin() + start, subject.begin() + end) << std::endl;
+		}
+	}
+
 	//////////////////////////////
 
 	auto matrix = std::vector<evo_model>(N * N);
