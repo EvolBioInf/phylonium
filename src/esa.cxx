@@ -19,6 +19,7 @@
  */
 #include <memory>
 #include <string>
+#include <array>
 
 #include "esa.h"
 #include "global.h"
