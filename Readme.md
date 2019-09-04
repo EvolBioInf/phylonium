@@ -23,6 +23,9 @@ After a successful build the `phylonium` executable is found in the `src` direct
 
 The output is a distance matrix in PHYLIP format. Use `phylip neighbor`, `mat nj` from [mattools](https://github.com/kloetzl/mattools) or any other neighbor-joining implementation to build the phylogenetic tree.
 
+For a more detailed description see the [manual](documentation/manual.pdf).
+
+
 # License
 
 Copyright © 2018 - 2019 Fabian Klötzl  
