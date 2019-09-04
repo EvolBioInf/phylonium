@@ -40,5 +40,16 @@ revseqcmp_fn *revseqcmp_select(void)
 	}
 }
 
+#if __has_attribute(ifunc)
+
 size_t revseqcmp(const char *begin, const char *other, size_t length)
 	__attribute__((ifunc("revseqcmp_select")));
+
+#else
+
+size_t revseqcmp(const char *begin, const char *other, size_t length)
+{
+	return (revseqcmp_select())(begin, other, length);
+}
+
+#endif

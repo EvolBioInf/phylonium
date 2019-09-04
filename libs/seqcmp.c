@@ -48,5 +48,16 @@ seqcmp_fn *seqcmp_select(void)
 	}
 }
 
+#if __has_attribute(ifunc)
+
 size_t seqcmp(const char *begin, const char *other, size_t length)
 	__attribute__((ifunc("seqcmp_select")));
+
+#else
+
+size_t seqcmp(const char *begin, const char *other, size_t length)
+{
+	return (seqcmp_select())(begin, other, length);
+}
+
+#endif
