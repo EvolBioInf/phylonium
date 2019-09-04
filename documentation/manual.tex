@@ -44,7 +44,7 @@ First, align the sequences and then use a maximum likelihood approach to find th
 
 \section{Installation}
 
-\phylonium has two runtime prerequisites: \tool{libdivsufsort} and the \tool{GNU Scientific Library} (GSL). Install them your the package manager.
+\phylonium has two runtime prerequisites: \tool{libdivsufsort} and the \tool{GNU Scientific Library} (GSL). Install them via your package manager, for instance \lstinline!apt!.
 
 \begin{lstlisting}
 %  sudo apt install libdivsufsort libgsl23
@@ -59,7 +59,7 @@ At the moment \phylonium has to be build directly from the source code. This req
 Get a local copy of \phylonium by cloning the repository:
 
 \begin{lstlisting}[language=bash]
-%  git clone https://github.com/kloetzl/phylonium
+%  git clone https://github.com/evolbioinf/phylonium
 \end{lstlisting}
 
 Change into the newly created directory and prepare the configuration of the package.
@@ -95,13 +95,13 @@ After \phylonium has been built, we can check whether it has been correctly inst
 \begin{lstlisting}
 %  phylonium
 Usage: phylonium [OPTIONS] FILES...
-	FILES... can be any sequence of FASTA files, each file representing one genome.
+  FILES... can be any sequence of FASTA files, each file representing one genome.
 
 Options:
   -2, --2pass          Enable two-pass algorithm
   -b, --bootstrap=N    Print additional bootstrap matrices
   --complete-deletion  Delete the whole aligned column in case of gaps
-  -r FILE              Add FILE to the list of references
+  -r FILE              Set the reference genome
   -t, --threads=N      The number of threads to be used; by default, all available processors are used
   -v, --verbose        Print additional information
   -h, --help           Display this help and exit
@@ -161,18 +161,18 @@ Internally, \phylonium \emph{aligns} all sequences to a reference. This simplifi
 %  phylonium *.fa --verbose
 chosen reference: AP009240
 ref: AP009240
-length: 4887515
-aligning took 1808ms.
+Mapping 29 sequences: 100.0% (29/29), done.
+Comparing the sequences: 100.0% (406/406), done.
 ...
+avg coverage: 0.738057
+alignment:  110170145 137065486 0.803777
 \end{lstlisting}
 
-It may be beneficial to explicitly set the reference, for instance if the data set contains an assembly of the type strain. This can is done with the \lstinline!-r! argument. If multiple references are supplied, \phylonium combines the results of the alignments.
+It may be beneficial to explicitly set the reference, for instance if the data set contains an assembly of the type strain. This can is done with the \lstinline!-r! argument.
 
 \begin{lstlisting}
 %  phylonium *.fa --verbose -r FM180568.fa
 ref: FM180568
-length: 4965553
-aligning took 1943ms.
 ...
 \end{lstlisting}
 
@@ -182,11 +182,7 @@ For as yet unexplored data sets it may be hard to choose a good reference. For t
 %  phylonium *.fa --verbose --2pass
 chosen reference: AP009240
 ref: AP009240
-length: 4887515
-aligning took 1886ms.
 ref: CP000948
-length: 4686135
-aligning took 1838ms.
 ...
 \end{lstlisting}
 
