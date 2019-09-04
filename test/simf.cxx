@@ -1,4 +1,8 @@
 /**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright 2019 © Fabian Klötzl
+ */
+/**
  * This program can create genome sequences with a specific distance.
  */
 

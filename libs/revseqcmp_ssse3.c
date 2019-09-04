@@ -1,3 +1,7 @@
+/**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright 2019 © Fabian Klötzl
+ */
 #include <emmintrin.h>
 #include <stddef.h>
 #include <string.h>

@@ -1,6 +1,6 @@
 /**
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright 2018 © Fabian Klötzl
+ * Copyright 2018 - 2019 © Fabian Klötzl
  */
 /**
  * @file
@@ -393,7 +393,7 @@ void version(void)
 {
 	const char str[] = {
 		"phylonium " VERSION "\n"
-		"Copyright (C) 2017 - 2018 Fabian Klötzl\n"
+		"Copyright (C) 2017 - 2019 Fabian Klötzl\n"
 		"License GPLv3+: GNU GPL version 3 or later "
 		"<http://gnu.org/licenses/gpl.html>\n"
 		"This is free software: you are free to change and redistribute it.\n"

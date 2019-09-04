@@ -1,4 +1,7 @@
-
+/**
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright 2019 © Fabian Klötzl
+ */
 #pragma once
 
 #ifdef __cplusplus
