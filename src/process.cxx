@@ -473,18 +473,19 @@ void filter_overlaps_max(std::vector<homology> &pile)
 
 	size_t size = pile.size();
 
-	auto predecessor = std::vector<ssize_t>(size, -1);
-	auto score = std::vector<ssize_t>(size, 0);
+	auto predecessor_buffer = std::vector<ssize_t>(size + 1, -1);
+	auto score_buffer = std::vector<ssize_t>(size + 1, 0);
 
-	assert(predecessor.size() == size);
-	assert(score.size() == size);
+	ssize_t *predecessor = predecessor_buffer.data() + 1;
+	ssize_t *score = score_buffer.data() + 1;
 
+	predecessor[0] = -1;
 	score[0] = pile[0].length;
 
 	for (ssize_t i = 1; i < (ssize_t)size; i++) {
 		// find maximum, so far
 		auto max_value = (ssize_t)0;
-		auto max_index = (ssize_t)0;
+		auto max_index = (ssize_t)-1;
 
 		for (ssize_t k = 0; k < i; k++) {
 			if (!pile[k].ends_left_of(pile[i])) continue;
@@ -495,16 +496,15 @@ void filter_overlaps_max(std::vector<homology> &pile)
 			}
 		}
 
-		assert(0 <= max_index && max_index < i);
 		predecessor[i] = max_index;
 		score[i] = score[max_index] + pile[i].length;
 	}
 
 	auto visited = std::vector<bool>(size, false);
 
-	auto that = std::max_element(score.begin(), score.end());
+	auto that = std::max_element(score_buffer.begin(), score_buffer.end());
 
-	ssize_t index = that - score.begin();
+	ssize_t index = that - score_buffer.begin() - 1;
 	while (index >= 0) {
 		visited[index] = true;
 		index = predecessor[index];
