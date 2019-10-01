@@ -13,6 +13,7 @@ unittests_SOURCES= \
 	$(top_srcdir)/src/process.h \
 	$(top_srcdir)/src/sequence.cxx \
 	$(top_srcdir)/src/sequence.h \
+	catch.hpp \
 	Tmain.cxx \
 	Tprocess.cxx \
 	Tsequence.cxx
