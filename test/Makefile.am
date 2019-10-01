@@ -5,12 +5,28 @@ simf_CPPFLAGS= -std=c++14 -Wall -Wextra
 simf_CXXFLAGS= -ggdb
 
 unittests_SOURCES= \
-	Tmain.cxx \
-	Tsequence.cxx \
+	$(top_srcdir)/src/esa.cxx \
+	$(top_srcdir)/src/esa.h \
+	$(top_srcdir)/src/evo_model.cxx \
+	$(top_srcdir)/src/evo_model.h \
+	$(top_srcdir)/src/process.cxx \
+	$(top_srcdir)/src/process.h \
 	$(top_srcdir)/src/sequence.cxx \
-	$(top_srcdir)/src/sequence.h
-unittests_CPPFLAGS= -I$(top_srcdir)/src -std=c++14 -Wall -Wextra
+	$(top_srcdir)/src/sequence.h \
+	Tmain.cxx \
+	Tprocess.cxx \
+	Tsequence.cxx
+unittests_CPPFLAGS= -I$(top_srcdir)/src -I$(top_srcdir)/libs -std=c++14 -Wall -Wextra
 unittests_CXXFLAGS= -ggdb
+unittests_LDADD = \
+	$(top_builddir)/libs/libcompat.a \
+	$(top_builddir)/libs/libpfasta.a \
+	$(top_builddir)/libs/librevseqcmp.a \
+	$(top_builddir)/libs/librevseqcmp_ssse3.a \
+	$(top_builddir)/libs/libseqcmp.a \
+	$(top_builddir)/libs/libseqcmp_avx2.a \
+	$(top_builddir)/libs/libseqcmp_avx512.a \
+	$(top_builddir)/libs/libseqcmp_sse2.a
 
 dist_noinst_DATA= simple.sh
 
