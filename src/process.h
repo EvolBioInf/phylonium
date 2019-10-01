@@ -143,3 +143,6 @@ class homology
 		return that;
 	}
 };
+
+std::vector<std::vector<homology>> complete_delete(
+	const std::vector<std::vector<homology>> &homologies);

@@ -449,9 +449,6 @@ std::vector<evo_model> process(const sequence &subject,
 	//////////////////////////////
 	// reduce to core genome
 
-	std::vector<std::vector<homology>> complete_delete(
-		const std::vector<std::vector<homology>> &homologies);
-
 	if (FLAGS & flags::complete_deletion) {
 		homologies = complete_delete(homologies);
 	}
