@@ -9,8 +9,11 @@ phylonium_LDADD = \
 	$(top_builddir)/libs/librevseqcmp_ssse3.a \
 	$(top_builddir)/libs/libseqcmp.a \
 	$(top_builddir)/libs/libseqcmp_sse2.a \
-	$(top_builddir)/libs/libseqcmp_avx2.a \
-	$(top_builddir)/libs/libseqcmp_avx512.a
+	$(top_builddir)/libs/libseqcmp_avx2.a
+
+if AVX512
+phylonium_LDADD+=$(top_builddir)/libs/libseqcmp_avx512.a
+endif
 
 .PHONY: format debug
 

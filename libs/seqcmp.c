@@ -4,6 +4,7 @@
  */
 
 #include "seqcmp.h"
+#include "config.h"
 
 #include <assert.h>
 
@@ -33,11 +34,14 @@ seqcmp_fn *seqcmp_select(void)
 	// https://gcc.gnu.org/onlinedocs/gcc/x86-Built-in-Functions.html
 	__builtin_cpu_init();
 
+#ifdef AVX512
 	if (__builtin_cpu_supports("popcnt") &&
 		__builtin_cpu_supports("avx512bw") &&
 		__builtin_cpu_supports("avx512vl")) {
 		return seqcmp_avx512;
-	} else if (__builtin_cpu_supports("popcnt") &&
+	} else
+#endif
+	if (__builtin_cpu_supports("popcnt") &&
 			   __builtin_cpu_supports("avx2")) {
 		return seqcmp_avx2;
 	} else if (__builtin_cpu_supports("popcnt") &&
