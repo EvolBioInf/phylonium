@@ -1,0 +1,26 @@
+language: cpp
+compiler:
+  - gcc
+  # - clang
+sudo: false
+addons:
+  apt:
+    packages:
+      - libdivsufsort-dev
+      - libgsl0-dev
+
+install:
+  - pip install --user cpp-coveralls
+
+script:
+- cd $TRAVIS_BUILD_DIR
+- autoreconf -fvi -Im4
+- export MYFLAGS="--coverage"
+- ./configure --disable-avx512 CFLAGS="$MYFLAGS" CXXFLAGS="$MYFLAGS"
+- make
+- make check || cat ./test-suite.log || exit 1
+- ls
+- make distcheck DISTCHECK_CONFIGURE_FLAGS="--disable-avx512"
+
+after_success:
+- coveralls --exclude libs --exclude test/catch.hpp --gcov-options '\-lp'
