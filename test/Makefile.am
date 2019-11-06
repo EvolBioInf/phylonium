@@ -23,13 +23,17 @@ unittests_LDADD = \
 	$(top_builddir)/libs/libcompat.a \
 	$(top_builddir)/libs/libpfasta.a \
 	$(top_builddir)/libs/librevseqcmp.a \
-	$(top_builddir)/libs/librevseqcmp_ssse3.a \
-	$(top_builddir)/libs/libseqcmp.a \
-	$(top_builddir)/libs/libseqcmp_avx2.a \
-	$(top_builddir)/libs/libseqcmp_sse2.a
+	$(top_builddir)/libs/libseqcmp.a
 
-if AVX512
+if ENABLE_X86_SIMD
+
+unittests_LDADD+=$(top_builddir)/libs/librevseqcmp_ssse3.a \
+	$(top_builddir)/libs/libseqcmp_sse2.a \
+	$(top_builddir)/libs/libseqcmp_avx2.a
+
+if ENABLE_AVX512
 unittests_LDADD+=$(top_builddir)/libs/libseqcmp_avx512.a
+endif
 endif
 
 dist_noinst_DATA= simple.sh

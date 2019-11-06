@@ -6,13 +6,17 @@ phylonium_LDADD = \
 	$(top_builddir)/libs/libcompat.a \
 	$(top_builddir)/libs/libpfasta.a \
 	$(top_builddir)/libs/librevseqcmp.a \
-	$(top_builddir)/libs/librevseqcmp_ssse3.a \
-	$(top_builddir)/libs/libseqcmp.a \
+	$(top_builddir)/libs/libseqcmp.a
+
+if ENABLE_X86_SIMD
+
+phylonium_LDADD+=$(top_builddir)/libs/librevseqcmp_ssse3.a \
 	$(top_builddir)/libs/libseqcmp_sse2.a \
 	$(top_builddir)/libs/libseqcmp_avx2.a
 
-if AVX512
+if ENABLE_AVX512
 phylonium_LDADD+=$(top_builddir)/libs/libseqcmp_avx512.a
+endif
 endif
 
 .PHONY: format debug

@@ -37,15 +37,24 @@ AS_IF([test "x$have_libdivsufsort" = "xno"],
 	[AC_MSG_ERROR([Missing libdivsufsort.])
 ])
 
-# older compilers don't support AVX512
-AC_ARG_ENABLE([avx512],
-	[AS_HELP_STRING([--disable-avx512],[disable AVX512 support @<:@default: yes@:>@])],
-	[avx512=${enableval}],[avx512=yes]
+AC_ARG_ENABLE([x86simd],
+	[AS_HELP_STRING([--disable-x86simd],[disable x86 SIMD support @<:@default: enabled@:>@])],
+	[x86simd=${enableval}],[x86simd=enabled]
 	)
 
-AC_MSG_WARN(["XXX${avx512}"])
-AS_IF([test "x${avx512}" = xyes],[AC_DEFINE([AVX512],[1],[Enable AVX512 support])])
-AM_CONDITIONAL([AVX512],[test "x${avx512}" = xyes])
+# AC_MSG_WARN(["XXX${x86simd}"])
+AS_IF([test "x${x86simd}" = xenabled],[AC_DEFINE([ENABLE_X86_SIMD],[1],[Enable x86 SIMD support])])
+AM_CONDITIONAL([ENABLE_X86_SIMD],[test "x${x86simd}" = xenabled])
+
+# older compilers don't support AVX512
+AC_ARG_ENABLE([avx512],
+	[AS_HELP_STRING([--disable-avx512],[disable AVX512 support @<:@default: enabled@:>@])],
+	[avx512=${enableval}],[avx512=enabled]
+	)
+
+# AC_MSG_WARN(["XXX${avx512}"])
+AS_IF([test "x${avx512}" = xenabled],[AC_DEFINE([ENABLE_AVX512],[1],[Enable AVX512 support])])
+AM_CONDITIONAL([ENABLE_AVX512],[test "x${avx512}" = xenabled])
 
 # Check for various headers including those used by libdivsufsort.
 AC_CHECK_HEADERS([limits.h stdlib.h string.h unistd.h stdint.h inttypes.h err.h errno.h fcntl.h])

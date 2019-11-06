@@ -9,6 +9,17 @@
 
 #define UNLIKELY(X) __builtin_expect((X), 0)
 
+/** @brief Check whether two characters are complementary.
+ * @param c - One nucleotide.
+ * @param d - A nucleotide from the other sequence.
+ * @returns true iff the two nucleotides are complements.
+ */
+int is_complement(char c, char d)
+{
+	int xorr = c ^ d;
+	return (xorr & 6) == 4;
+}
+
 size_t revseqcmp_generic(const char *begin, const char *other, size_t length)
 {
 	assert(begin != NULL);
@@ -25,6 +36,8 @@ size_t revseqcmp_generic(const char *begin, const char *other, size_t length)
 
 	return substitutions;
 }
+
+#ifdef ENABLE_X86_SIMD
 
 revseqcmp_fn *revseqcmp_select(void)
 {
@@ -50,6 +63,14 @@ size_t revseqcmp(const char *begin, const char *other, size_t length)
 size_t revseqcmp(const char *begin, const char *other, size_t length)
 {
 	return (revseqcmp_select())(begin, other, length);
+}
+
+#endif
+#else
+
+size_t revseqcmp(const char *begin, const char *other, size_t length)
+{
+	return revseqcmp_generic(begin, other, length);
 }
 
 #endif

@@ -8,17 +8,6 @@
 #include <tmmintrin.h>
 #include "revseqcmp.h"
 
-/** @brief Check whether two characters are complementary.
- * @param c - One nucleotide.
- * @param d - A nucleotide from the other sequence.
- * @returns true iff the two nucleotides are complements.
- */
-int is_complement(char c, char d)
-{
-	int xorr = c ^ d;
-	return (xorr & 6) == 4;
-}
-
 size_t revseqcmp_ssse3(const char *self, const char *other, size_t length)
 {
 	size_t substitutions = 0;
