@@ -17,9 +17,9 @@
  * ESA. If we simply store the interval for "AA" in the cache, once and use it
  * for each query we are significantly faster (up to 7 times).
  */
+#include <array>
 #include <memory>
 #include <string>
-#include <array>
 
 #include "esa.h"
 #include "global.h"

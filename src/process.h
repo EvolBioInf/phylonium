@@ -11,7 +11,6 @@
 
 std::vector<evo_model> process(const sequence &, const std::vector<sequence> &);
 
-
 class homology
 {
   public:
@@ -144,5 +143,5 @@ class homology
 	}
 };
 
-std::vector<std::vector<homology>> complete_delete(
-	const std::vector<std::vector<homology>> &homologies);
+std::vector<std::vector<homology>>
+complete_delete(const std::vector<std::vector<homology>> &homologies);

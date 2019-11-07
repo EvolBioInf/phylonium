@@ -3,6 +3,7 @@
  * Copyright 2018 - 2019 © Fabian Klötzl
  */
 
+#include "process.h"
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -13,7 +14,6 @@
 #include "esa.h"
 #include "evo_model.h"
 #include "global.h"
-#include "process.h"
 #include "sequence.h"
 
 double shuprop(size_t, double, size_t);
