@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 #include <stddef.h>
+#include "config.h"
 
 int is_complement(char c, char d);
 

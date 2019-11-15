@@ -4,6 +4,7 @@
  */
 
 #include "revseqcmp.h"
+#include "config.h"
 
 #include <assert.h>
 
