@@ -229,16 +229,12 @@ int main(int argc, char *argv[])
 	}
 
 	// at max `file_names` many files have to be read.
-	auto queries = std::vector<sequence>();
-	queries.reserve(file_names.size());
+	auto queries = std::vector<sequence>(file_names.size());
 
 	// read all genomes
-	std::transform(
-		file_names.begin(), file_names.end(), std::back_inserter(queries),
-		[](std::string file_name) { return join(read_genome(file_name)); });
-
-	if (queries.size() < 2) {
-		errx(1, "Less than two genomes given, nothing to compare.");
+	#pragma omp parallel for
+	for (size_t i = 0; i < file_names.size(); i++) {
+		queries[i] = join(read_genome(file_names[i]));
 	}
 
 	// avoid copying sequences
