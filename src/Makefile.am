@@ -10,9 +10,11 @@ phylonium_LDADD = \
 
 if ENABLE_X86_SIMD
 
-phylonium_LDADD+=$(top_builddir)/libs/librevseqcmp_ssse3.a \
-	$(top_builddir)/libs/libseqcmp_sse2.a \
-	$(top_builddir)/libs/libseqcmp_avx2.a
+phylonium_LDADD+=\
+	$(top_builddir)/libs/librevseqcmp_avx2.a \
+	$(top_builddir)/libs/librevseqcmp_ssse3.a \
+	$(top_builddir)/libs/libseqcmp_avx2.a \
+	$(top_builddir)/libs/libseqcmp_sse2.a
 
 if ENABLE_AVX512
 phylonium_LDADD+=$(top_builddir)/libs/libseqcmp_avx512.a

@@ -34,10 +34,12 @@ librevseqcmp_a_SOURCES = revseqcmp.c revseqcmp.h
 librevseqcmp_a_LIBADD =
 
 if ENABLE_X86_SIMD
-noinst_LIBRARIES+= librevseqcmp_ssse3.a
-librevseqcmp_a_LIBADD+= librevseqcmp_ssse3.a
+noinst_LIBRARIES+= librevseqcmp_ssse3.a librevseqcmp_avx2.a
+librevseqcmp_a_LIBADD+= librevseqcmp_ssse3.a librevseqcmp_avx2.a
 librevseqcmp_ssse3_a_SOURCES = revseqcmp_ssse3.c
 librevseqcmp_ssse3_a_CFLAGS = -mpopcnt -mssse3
+librevseqcmp_avx2_a_SOURCES = revseqcmp_avx2.c
+librevseqcmp_avx2_a_CFLAGS = -mpopcnt -mavx2
 endif
 
 format:
