@@ -27,7 +27,7 @@
 
 #include "pfasta.h"
 
-#define VERSION "v14"
+#define VERSION "v14+2"
 
 #ifdef __SSE2__
 #include <emmintrin.h>
@@ -166,7 +166,8 @@ cleanup:
 
 int buffer_peek(struct pfasta_parser *pp)
 {
-	return LIKELY(pp->read_ptr < pp->fill_ptr) ? *pp->read_ptr : EOF;
+	return LIKELY(pp->read_ptr < pp->fill_ptr) ? *(unsigned char *)pp->read_ptr
+											   : EOF;
 }
 
 char *buffer_begin(struct pfasta_parser *pp)
@@ -277,7 +278,8 @@ static int copy_word(struct pfasta_parser *pp, dynstr *target)
 {
 	int return_code = 0;
 
-	while (LIKELY(!my_isspace(buffer_peek(pp)))) {
+	int c;
+	while (c = buffer_peek(pp), c != EOF && LIKELY(!my_isspace(c))) {
 		char *end_of_word = find_first_space(buffer_begin(pp), buffer_end(pp));
 		size_t word_length = end_of_word - buffer_begin(pp);
 
