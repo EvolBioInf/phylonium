@@ -14,9 +14,12 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_LANG(C++)
 AC_OPENMP
 
+AX_CXX_COMPILE_STDCXX(14)
+
 # Execute all tests using C
 AC_LANG(C)
 AC_OPENMP
+AX_GCC_FUNC_ATTRIBUTE(ifunc)
 
 AC_CHECK_LIB([m],[cos])
 AC_CHECK_LIB([gslcblas],[cblas_dgemm], [], [have_gsl=no])
