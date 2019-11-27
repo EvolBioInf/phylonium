@@ -16,7 +16,7 @@ extern "C" {
  * @param d - A nucleotide from the other sequence.
  * @returns true iff the two nucleotides are complements.
  */
-extern inline int is_complement(char c, char d)
+inline int is_complement(char c, char d)
 {
 	int xorr = c ^ d;
 	return (xorr & 6) == 4;

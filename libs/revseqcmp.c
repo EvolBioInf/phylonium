@@ -10,6 +10,8 @@
 
 #define UNLIKELY(X) __builtin_expect((X), 0)
 
+ int is_complement(char c, char d);
+
 size_t revseqcmp_generic(const char *begin, const char *other, size_t length)
 {
 	assert(begin != NULL);
