@@ -23,7 +23,14 @@ After a successful build the `phylonium` executable is found in the `src` direct
 
 The output is a distance matrix in PHYLIP format. Use `phylip neighbor`, `mat nj` from [mattools](https://github.com/kloetzl/mattools) or any other neighbor-joining implementation to build the phylogenetic tree.
 
-For a more detailed description see the [manual](documentation/manual.pdf).
+For a more detailed description see the [manual](documentation/manual.pdf) or [paper](https://academic.oup.com/bioinformatics/advance-article/doi/10.1093/bioinformatics/btz903/5650408?rss=1).
+
+
+# Citation
+
+If you find this software useful, please cite our paper.
+
+> Fabian Klötzl, Bernhard Haubold, Phylonium: Fast Estimation of Evolutionary Distances from Large Samples of Similar Genomes, Bioinformatics, btz903, https://doi.org/10.1093/bioinformatics/btz903
 
 
 # License
