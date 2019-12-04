@@ -78,7 +78,7 @@ if __name__ == '__main__':
 		out_format = Path(args.image_file).suffix[1:]
 	else:
 		# split input file name
-		print args.file
+		print(args.file)
 		inputfile = Path(args.file if args.file else "etefmt.pdf")
 		out_stem = Path(inputfile).stem
 		out_format = "pdf"

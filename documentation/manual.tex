@@ -42,7 +42,7 @@
 Biology textbooks usually contain a two part workflow to reconstruct the phylogenetic history of biological sequences: % \cite{fixme}
 First, align the sequences and then use a maximum likelihood approach to find the best tree. This method worked well for many years but has become less useful as the number of sequenced genomes grew rapidly and made existing workflows computationally unfeasible. To mitigate this problem so-called \emph{alignment-free} methods have been devised that quickly estimate phylogenies from unaligned sequences at reasonable accuracy. This document explains how to use one of these tools, \phylonium, for phylogeny reconstruction. 
 
-\section{Installation}
+\section{Installation from Source}
 
 \phylonium has two runtime prerequisites: \tool{libdivsufsort} and the \tool{GNU Scientific Library} (GSL). Install them via your package manager, for instance \lstinline!apt!.
 
@@ -74,6 +74,10 @@ Now the directory contains a new file called \lstinline!configure!. This script 
 \begin{lstlisting}
 %  ./configure
 \end{lstlisting}
+
+\begin{quotation}
+\textbf{Note:} \phylonium uses x86 specific instructions to speed up the comparison of sequences. If you have a different CPU (e.\,g. arm), you should use \lstinline!./configure --disable-x86simd!. On old x86 systems with old compilers you may have to disable the optimizations for AVX512: \lstinline!./configure --disable-avx512!.
+\end{quotation}
 
 The configuration step fails if \tool{libdivsufsort} or the \tool{GSL} are not found. After successful configuration the program has to be compiled.
 
@@ -123,7 +127,7 @@ To see how \phylonium works, we apply it to a set of 29~\textit{Escherichia coli
 Now your working directory contains 29 individual genomic files with the extension \lstinline!.fa!. We begin by comparing only two of them.
 
 \begin{lstlisting}
-%  phylonium FM180568.fa BA000007.fa 
+%  phylonium FM180568.fa BA000007.fa
 2
 BA000007  0.0000e+00  2.4833e-02
 FM180568  2.4833e-02  0.0000e+00
@@ -140,7 +144,7 @@ Now the file \lstinline!eco29.out! contains a distance matrix of size 29 by 29, 
 \begin{lstlisting}
 %  mat nj eco29.out > eco29.tree
 %  cat eco29.tree
-((((((((AE005174:-0.000019,BA000007:1.8692e-04)100:0.000738,CP001846:7.8208e-04)100:0.005264,CP000034:7.1481e-03)100:0.002179,((((((AE014075:0.003805,CU928162:4.0811e-03)30:0.000106,((CP000243:0.000287,CP000468:2.8884e-04)92:0.000463,CU928161:6.3318e-04)100:3.3526e-03)84:0.000290,CP000247:4.3563e-03)100:0.001366,FM180568:5.7901e-03)100:0.006161,(CU928164:0.006473,CP000970:6.6616e-03)100:2.9194e-03)100:0.001377,CU928163:9.6085e-03)100:3.7311e-03)100:0.001825,((((AP009048:0.000021,U00096:-1.2518e-05)100:0.000054,CP001396:5.3536e-05)42:0.000005,CP000948:-1.0385e-05)100:0.004145,(CP000802:0.002660,CP000946:3.0406e-03)100:8.5194e-04)100:1.8943e-03)60:0.000689,((AE005674:0.000240,AE014073:7.9630e-05)100:0.000401,CP000266:5.1491e-04)100:6.4057e-03)78:0.000581,((AP009240:0.003100,CU928160:2.7860e-03)100:0.000288,CP000800:3.2921e-03)100:1.9029e-03)89:0.000362,CP000038:4.6574e-03,(CP001063:0.001311,CP000036:1.3202e-03)100:3.6383e-03);
+((((((((AE005174:-0.000019,BA000007:1.8692e-04)100:0.000738,CP001846:7.8206e-04)100:0.005264,CP000034:7.1481e-03)100:0.002179,((((((AE014075:0.003806,CU928162:4.0810e-03)30:0.000106,((CP000243:0.000287,CP000468:2.8884e-04)92:0.000463,CU928161:6.3318e-04)100:3.3526e-03)84:0.000290,CP000247:4.3564e-03)100:0.001367,FM180568:5.7900e-03)100:0.006160,(CU928164:0.006474,CP000970:6.6612e-03)100:2.9209e-03)100:0.001376,CU928163:9.6094e-03)100:3.7308e-03)100:0.001825,((((AP009048:0.000021,U00096:-1.2523e-05)100:0.000054,CP001396:5.3529e-05)42:0.000005,CP000948:-1.0393e-05)100:0.004144,(CP000802:0.002662,CP000946:3.0385e-03)100:8.4870e-04)100:1.8957e-03)60:0.000689,((AE005674:0.000240,AE014073:7.9602e-05)100:0.000401,CP000266:5.1495e-04)100:6.4055e-03)78:0.000581,((AP009240:0.003100,CU928160:2.7861e-03)100:0.000288,CP000800:3.2921e-03)100:1.9029e-03)89:0.000362,CP000038:4.6574e-03,(CP001063:0.001312,CP000036:1.3202e-03)100:3.6383e-03);
 \end{lstlisting}
 
 This phylogeny in Newick format, which I am here visualizing using the ETE Toolkit\footnote{\url{http://etetoolkit.org/}}.

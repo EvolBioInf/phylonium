@@ -7,7 +7,7 @@ This is the `phylonium` program for estimating the evolutionary distances betwee
 
 This program depends on two external libraries: [libdivsufsort](https://github.com/y-256/libdivsufsort) and the [GSL](https://www.gnu.org/software/gsl/). Both should be available for installation through a package manager of your choice. Furthermore, to build from the git repository the autotools are required.
 
-Assuming all prerequisites are installed, the build can be started as follows.
+Assuming all prerequisites are installed, the build can be started as follows. See the manual in case of compilation errors or when you try to compile on Arm: [manual](documentation/manual.pdf).
 
     $ autoreconf -fi -Im4
     $ ./configure
