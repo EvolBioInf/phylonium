@@ -18,6 +18,7 @@ extern int RETURN_CODE;
 
 extern double ANCHOR_P_VALUE;
 extern long unsigned int BOOTSTRAP;
+extern std::string REFPOS_FILE_NAME;
 
 /**
  * @brief This macro is used to print a warning and make the program exit with

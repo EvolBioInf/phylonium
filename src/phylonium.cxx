@@ -56,6 +56,7 @@ int FLAGS = flags::none;
 int THREADS = 1;
 long unsigned int BOOTSTRAP = 0;
 int RETURN_CODE = EXIT_SUCCESS;
+std::string REFPOS_FILE_NAME = "";
 
 // TODO: This is a hack and should be redone at some point.
 size_t reference_index = 0;
@@ -108,7 +109,7 @@ int main(int argc, char *argv[])
 	while (1) {
 		int option_index;
 		int c =
-			getopt_long(argc, argv, "2b:hpr:t:v", long_options, &option_index);
+			getopt_long(argc, argv, "2b:hp:r:t:v", long_options, &option_index);
 
 		if (c == -1) {
 			break;
@@ -161,6 +162,7 @@ int main(int argc, char *argv[])
 			case 'p': {
 				FLAGS |= flags::print_positions;
 				FLAGS |= flags::complete_deletion;
+				REFPOS_FILE_NAME = std::string(optarg);
 				break;
 			}
 			case 'r': {
@@ -236,8 +238,8 @@ int main(int argc, char *argv[])
 	// at max `file_names` many files have to be read.
 	auto queries = std::vector<sequence>(file_names.size());
 
-	// read all genomes
-	#pragma omp parallel for num_threads(THREADS)
+// read all genomes
+#pragma omp parallel for num_threads(THREADS)
 	for (size_t i = 0; i < file_names.size(); i++) {
 		queries[i] = join(read_genome(file_names[i]));
 	}
@@ -373,7 +375,8 @@ void usage(int status)
 		"  -b, --bootstrap=N    Print additional bootstrap matrices\n"
 		"  --complete-deletion  Delete the whole aligned column in case of "
 		"gaps\n"
-		"  -p                   Print reference positions (implies complete deletion)\n"
+		"  -p                   Print reference positions (implies complete "
+		"deletion)\n"
 		"  -r FILE              Set the reference genome\n"
 #ifdef _OPENMP
 		"  -t, --threads=N      The number of threads to be used; by default, "

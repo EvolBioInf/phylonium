@@ -8,6 +8,8 @@
 #include <cassert>
 #include <cmath>
 #include <cstring>
+#include <err.h>
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -454,15 +456,46 @@ std::vector<evo_model> process(const sequence &subject,
 	}
 
 	if (FLAGS & flags::print_positions) {
+		std::vector<char> get_segsites(const sequence &sa, const homology &ha,
+									   const sequence &sb, const homology &hb);
+
 		// after complete deletion all sequences are restricted to the same
 		// positions on the reference. Print those positions.
 		const auto &homos = homologies[0];
 		size_t counter = 1;
-		for (auto &h : homos) {
+		auto refpos_file = std::ofstream(REFPOS_FILE_NAME);
+
+		for (size_t i = 0; i < homos.size(); i++) {
+			const auto &h = homos[i];
+			auto is_segsite = std::vector<char>(h.length, 0);
+
+			for (size_t m = 0; m < queries.size(); m++) {
+				auto foo =
+					get_segsites(queries[0], h, queries[m], homologies[m][i]);
+
+				for (size_t t = 0; t < foo.size(); t++) {
+					is_segsite[t] |= foo[t];
+				}
+			}
+
+			auto segsite_pos = std::vector<size_t>{};
+			for (size_t t = 0; t < is_segsite.size(); t++) {
+				if (is_segsite[t]) {
+					segsite_pos.push_back(t);
+				}
+			}
+
 			auto start = h.start();
 			auto end = h.end();
-			std::cerr << ">part" << counter++ << "\t(" << start << ".." << end << ")" << std::endl;
-			std::cerr << std::string(subject.begin() + start, subject.begin() + end) << std::endl;
+			refpos_file << ">part" << counter++ << "\t(" << start << ".." << end
+						<< ")  " << segsite_pos.size();
+			for (auto pos : segsite_pos) {
+				refpos_file << "  " << pos;
+			}
+			refpos_file << std::endl;
+			refpos_file << std::string(subject.begin() + start,
+									   subject.begin() + end)
+						<< std::endl;
 		}
 	}
 
@@ -595,7 +628,7 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 					  sb.c_str() + hbt.start_query(), length);
 	} else if (ha.direction == hb.direction &&
 			   ha.direction == homology::dir::reverse) {
-		// no need for double complement.
+		// no need for double complement
 		count.account(sa.c_str() + hat.start_query(),
 					  sb.c_str() + hbt.start_query(), length);
 	} else if (hb.direction == homology::dir::reverse) {
@@ -609,6 +642,69 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 	}
 
 	return count;
+}
+
+char *is_segsite(const char *begin, const char *other, char *out,
+				 size_t length);
+char *is_segsite_rev(const char *begin, const char *other, char *out,
+					 size_t length);
+
+std::vector<char> get_segsites(const sequence &sa, const homology &ha,
+							   const sequence &sb, const homology &hb)
+{
+	if (!ha.overlaps(hb)) {
+		return {};
+	}
+
+	size_t common_start = std::max(ha.start(), hb.start());
+	size_t common_end = std::min(ha.end(), hb.end());
+
+	assert(common_start < common_end);
+	size_t length = common_end - common_start;
+
+	auto hat = ha.trim(common_start, common_end);
+	auto hbt = hb.trim(common_start, common_end);
+
+	auto ret = std::vector<char>(length, 0);
+
+	if (ha.direction == hb.direction &&
+		ha.direction == homology::dir::forward) {
+		// simple comparison
+		is_segsite(sa.c_str() + hat.start_query(),
+				   sb.c_str() + hbt.start_query(), ret.data(), length);
+	} else if (ha.direction == hb.direction &&
+			   ha.direction == homology::dir::reverse) {
+		is_segsite(sa.c_str() + hat.start_query(),
+				   sb.c_str() + hbt.start_query(), ret.data(), length);
+		std::reverse(ret.begin(), ret.end());
+	} else if (hb.direction == homology::dir::reverse) {
+		// reverse b
+		is_segsite_rev(sa.c_str() + hat.start_query(),
+					   sb.c_str() + hbt.end_query(), ret.data(), length);
+	} else if (ha.direction == homology::dir::reverse) {
+		is_segsite_rev(sa.c_str() + hat.start_query(),
+					   sb.c_str() + hbt.end_query(), ret.data(), length);
+		std::reverse(ret.begin(), ret.end());
+	}
+
+	return ret;
+}
+
+char *is_segsite(const char *begin, const char *other, char *out, size_t length)
+{
+	for (size_t i = 0; i < length; i++) {
+		out[i] = begin[i] != other[i];
+	}
+	return out + length;
+}
+
+char *is_segsite_rev(const char *begin, const char *other, char *out,
+					 size_t length)
+{
+	for (size_t i = 0; i < length; i++) {
+		out[i] = begin[i] != other[length - i - 1];
+	}
+	return out + length;
 }
 
 std::vector<std::vector<homology>>
