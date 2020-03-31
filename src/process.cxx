@@ -680,11 +680,12 @@ std::vector<char> get_segsites(const sequence &sa, const homology &ha,
 	} else if (hb.direction == homology::dir::reverse) {
 		// reverse b
 		is_segsite_rev(sa.c_str() + hat.start_query(),
-					   sb.c_str() + hbt.end_query(), ret.data(), length);
+					   sb.c_str() + hbt.end_query() - length, ret.data(),
+					   length);
 	} else if (ha.direction == homology::dir::reverse) {
-		is_segsite_rev(sa.c_str() + hat.start_query(),
-					   sb.c_str() + hbt.end_query(), ret.data(), length);
-		std::reverse(ret.begin(), ret.end());
+		is_segsite_rev(sb.c_str() + hbt.start_query(),
+					   sa.c_str() + hat.end_query() - length, ret.data(),
+					   length);
 	}
 
 	return ret;
@@ -702,7 +703,8 @@ char *is_segsite_rev(const char *begin, const char *other, char *out,
 					 size_t length)
 {
 	for (size_t i = 0; i < length; i++) {
-		out[i] = begin[i] != other[length - i - 1];
+		int xorr = begin[i] ^ other[length - i - 1];
+		out[i] = (xorr & 6) != 4;
 	}
 	return out + length;
 }
