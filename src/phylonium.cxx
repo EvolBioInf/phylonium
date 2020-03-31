@@ -30,6 +30,7 @@
 #include <cmath>
 #include <err.h>
 #include <errno.h>
+#include <fstream>
 #include <functional>
 #include <getopt.h>
 #include <gsl/gsl_rng.h>
@@ -209,6 +210,15 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if (FLAGS & flags::print_positions) {
+		// avoid overwriting files
+		auto file = std::ifstream(REFPOS_FILE_NAME);
+		if (file.good()) {
+			errx(1, "output file '%s' already exists",
+				 REFPOS_FILE_NAME.c_str());
+		}
+	}
+
 	if (version_flag) {
 		version();
 	}
@@ -375,8 +385,8 @@ void usage(int status)
 		"  -b, --bootstrap=N    Print additional bootstrap matrices\n"
 		"  --complete-deletion  Delete the whole aligned column in case of "
 		"gaps\n"
-		"  -p                   Print reference positions (implies complete "
-		"deletion)\n"
+		"  -p FILE              Print reference positions to FILE (implies "
+		"complete deletion)\n"
 		"  -r FILE              Set the reference genome\n"
 #ifdef _OPENMP
 		"  -t, --threads=N      The number of threads to be used; by default, "
