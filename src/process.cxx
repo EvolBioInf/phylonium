@@ -487,8 +487,8 @@ std::vector<evo_model> process(const sequence &subject,
 
 			auto start = h.start();
 			auto end = h.end();
-			refpos_file << ">part" << counter++ << "\t(" << start << ".." << end
-						<< ")  " << segsite_pos.size();
+			refpos_file << ">part" << counter++ << "\t(" << (start + 1) << ".."
+						<< (end + 1) << ")  " << segsite_pos.size();
 			for (auto pos : segsite_pos) {
 				refpos_file << "  " << (pos + 1);
 			}
