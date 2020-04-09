@@ -2,6 +2,8 @@
 #include "catch.hpp"
 #include "process.h"
 
+std::string REFPOS_FILE_NAME;
+
 void filter_overlaps_max(std::vector<homology> &pile);
 
 bool operator==(const homology &a, const homology &b)
