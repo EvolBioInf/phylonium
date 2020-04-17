@@ -82,6 +82,26 @@ class span
 		return trim(other.start(), other.end());
 	}
 
+	span trim_unsafe(size_t start, size_t end) const
+	{
+		// Carefully handle cases where the given range is bigger than *this.
+		auto offset = start > this->start() ? start - this->start() : 0;
+		auto drift = this->end() > end ? this->end() - end : 0;
+
+		auto that = *this;
+
+		// shorten left by offset, right by drift.
+		that.m_pos += offset;
+		that.m_length = this->m_length - offset - drift;
+
+		return that;
+	}
+
+	span trim_unsafe(span other) const
+	{
+		return trim_unsafe(other.start(), other.end());
+	}
+
 	span shift_left(size_t offset) const
 	{
 		auto pos = start() >= offset ? start() - offset : 0;
@@ -201,12 +221,23 @@ class homology
 		return end() <= other.start();
 	}
 
+	homology copy_without_anchors() const
+	{
+		auto that = homology{};
+		that.direction = direction;
+		that.index_reference = index_reference;
+		that.index_reference_projected = index_reference_projected;
+		that.index_query = index_query;
+		that.length = length;
+		return that;
+	}
+
 	homology trim(size_t start, size_t end) const
 	{
 		if (end <= start) return *this; // invalid input range, ignore.
 
 		// Carefully handle cases where the given range is bigger than *this.
-		auto that = *this;
+		auto that = copy_without_anchors();
 		auto offset = start > this->start() && start < this->end()
 						  ? start - this->start()
 						  : 0;
@@ -229,14 +260,28 @@ class homology
 
 		auto interval = span(offset, that.length);
 
-		auto it = std::remove_if(
-			that.anchors.begin(), that.anchors.end(),
-			[=](auto anchor) { return !anchor.overlaps(interval); });
-		that.anchors.erase(it, that.anchors.end());
-
-		for (size_t i = 0; i < that.anchors.size(); i++) {
-			that.anchors[i] = that.anchors[i].trim(interval).shift_left(offset);
+		that.anchors.clear();
+		for (auto anchor : this->anchors) {
+			if (anchor.overlaps(interval)) {
+				that.anchors.push_back(
+					anchor.trim_unsafe(interval).shift_left(offset));
+			}
 		}
+
+		// auto it = anchors.begin();
+		// auto out = std::back_inserter(that.anchors);
+		// while (it < anchors.end() && it->ends_left_of(interval)) {
+		// 	it++;
+		// }
+		// if (it < anchors.end() && it->overlaps(interval)) {
+		// 	*out = it->trim(interval).shift_left(offset);
+		// 	it++, out++;
+		// }
+		// while(it < anchors.end() && !interval.ends_left_of(*it)){
+		// 	*out = it->trim(interval).shift_left(offset);
+		// 	it++, out++;
+		// }
+		// that.anchors.erase(out, )
 
 		return that;
 	}
