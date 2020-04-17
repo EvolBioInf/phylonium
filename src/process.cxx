@@ -241,6 +241,8 @@ auto anchor_homologies(const esa &ref, size_t threshold, const sequence &seq)
 				// right anchor
 
 				current.extend(this_pos_Q - end_Q + this_length);
+				current.anchors.push_back(
+					span(this_pos_Q - current.start_query(), this_length));
 
 				last_was_right_anchor = true;
 			} else {
@@ -253,6 +255,9 @@ auto anchor_homologies(const esa &ref, size_t threshold, const sequence &seq)
 				}
 
 				current = homology(this_pos_S, this_pos_Q, this_length);
+				current.anchors.push_back(span(0, this_length));
+				// current.anchors.push_back(
+				// 	span(this_pos_Q - last_pos_Q, this_length));
 
 				// this is not right anchor
 				last_was_right_anchor = false;
@@ -268,9 +273,12 @@ auto anchor_homologies(const esa &ref, size_t threshold, const sequence &seq)
 		this_pos_Q += this_length + 1;
 	}
 
+	// TODO: remove (don't add) very short anchors
+
 	// Very special case: The sequences are identical
 	if (last_length >= query_length) {
 		current = homology(last_pos_S, 0, query_length);
+		current.anchors.push_back(span(0, query_length));
 	}
 
 	if (last_was_right_anchor || last_length / 2 >= threshold) {
@@ -624,8 +632,69 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 	if (ha.direction == hb.direction &&
 		ha.direction == homology::dir::forward) {
 		// simple comparison
-		count.account(sa.c_str() + hat.start_query(),
-					  sb.c_str() + hbt.start_query(), length);
+
+		auto haa = hat.anchors.begin();
+		auto hba = hbt.anchors.begin();
+		auto haa_end = hat.anchors.end();
+		auto hba_end = hbt.anchors.end();
+
+		span to_compare{};
+		span dont_compare{};
+
+		auto count2 = evo_model{};
+		int counter = 0;
+
+		while (haa < haa_end && hba < hba_end) {
+			// fprintf(stderr, "\thaa:  %zu..%zu, hba: %zu..%zu\n", haa->start(), haa->end(), hba->start(), hba->end());
+
+			// find_next_overlap();
+			if (haa->overlaps(*hba)) {
+				auto dont_compare_old = dont_compare;
+				dont_compare = haa->trim(*hba);
+				to_compare = span::from_start_end(dont_compare_old.end(),
+												  dont_compare.start());
+				// fprintf(stderr, "to:   %zu..%zu\n", to_compare.start(), to_compare.end());
+				// fprintf(stderr, "dont: %zu..%zu\n", dont_compare.start(), dont_compare.end());
+
+				count2.account(
+					sa.c_str() + hat.start_query() + to_compare.start(),
+					sb.c_str() + hbt.start_query() + to_compare.start(),
+					to_compare.length());
+				count2.account_equal(dont_compare.length());
+				// count2.account(
+				// 	sa.c_str() + hat.start_query() + dont_compare.start(),
+				// 	sb.c_str() + hbt.start_query() + dont_compare.start(),
+				// 	dont_compare.length());
+			}
+
+			if (haa->end() < hba->end()) {
+				haa++;
+			} else if (haa->end() == hba->end()) {
+				haa++, hba++;
+			} else {
+				hba++;
+			}
+		}
+
+		// fprintf(stderr, "\thaa:  %zu..%zu, hba: %zu..%zu\n", haa->start(), haa->end(), hba->start(), hba->end());
+
+		if (haa < haa_end || hba < hba_end) {
+			// there is something left to compare
+			// should only happen at the end.
+			assert(counter++ == 0);
+			to_compare = span::from_start_end(dont_compare.end(), hat.length);
+			// fprintf(stderr, "to2:  %zu..%zu\n", to_compare.start(), to_compare.end());
+
+			count2.account(
+				sa.c_str() + hat.start_query() + to_compare.start(),
+				sb.c_str() + hbt.start_query() + to_compare.start(),
+				to_compare.length());
+		}
+
+		// count.account(sa.c_str() + hat.start_query(),
+		// 			  sb.c_str() + hbt.start_query(), length);
+		// assert(count == count2);
+		count += count2;
 	} else if (ha.direction == hb.direction &&
 			   ha.direction == homology::dir::reverse) {
 		// no need for double complement

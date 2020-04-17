@@ -32,6 +32,10 @@ class evo_model
 	void account(const char *stra, const char *strb, size_t length) noexcept;
 	void account_rev(const char *stra, const char *strb, size_t b_offset,
 					 size_t length) noexcept;
+	void account_equal(size_t equal) noexcept
+	{
+		homologs += equal;
+	};
 	evo_model &operator+=(const evo_model &other) noexcept;
 	size_t total() const noexcept;
 	double estimate_raw(bool zero_on_error = false) const noexcept;
@@ -50,4 +54,10 @@ class evo_model
 	}
 
 	evo_model bootstrap() const;
+
+	bool operator==(evo_model other)
+	{
+		return substitutions == other.substitutions &&
+			   homologs == other.homologs;
+	}
 };
