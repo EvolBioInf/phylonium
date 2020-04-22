@@ -1,6 +1,6 @@
 /**
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright 2018 - 2019 © Fabian Klötzl
+ * Copyright 2018 - 2020 © Fabian Klötzl
  */
 
 #include "process.h"
@@ -18,7 +18,7 @@
 #include "global.h"
 #include "sequence.h"
 
-#define SHORT_ANCHOR_THRESHOLD 128
+#define SHORT_ANCHOR_THRESHOLD 32
 
 double shuprop(size_t, double, size_t);
 
@@ -254,7 +254,7 @@ auto anchor_homologies(const esa &ref, size_t threshold, const sequence &seq)
 
 					// push last
 					current.reverseEh(border);
-					hv.push_back(std::move(current));
+					hv.emplace_back(std::move(current));
 				}
 
 				current = homology(this_pos_S, this_pos_Q, this_length);
@@ -276,8 +276,6 @@ auto anchor_homologies(const esa &ref, size_t threshold, const sequence &seq)
 		// Advance
 		this_pos_Q += this_length + 1;
 	}
-
-	// TODO: remove (don't add) very short anchors
 
 	// Very special case: The sequences are identical
 	if (last_length >= query_length) {
@@ -685,9 +683,56 @@ evo_model compare(const sequence &sa, const homology &ha, const sequence &sb,
 		count += count2;
 	} else if (ha.direction == hb.direction &&
 			   ha.direction == homology::dir::reverse) {
+		auto haa = hat.anchors.begin();
+		auto hba = hbt.anchors.begin();
+		auto haa_end = hat.anchors.end();
+		auto hba_end = hbt.anchors.end();
+
+		span to_compare{};
+		span dont_compare{};
+
+		auto count2 = evo_model{};
+
+		while (haa < haa_end && hba < hba_end) {
+			if (haa->overlaps(*hba)) {
+				auto dont_compare_old = dont_compare;
+				dont_compare = haa->trim_unsafe(*hba);
+				to_compare = span::from_start_end(dont_compare_old.end(),
+												  dont_compare.start());
+
+				count2.account(
+					sa.c_str() + hat.start_query() + to_compare.start(),
+					sb.c_str() + hbt.start_query() + to_compare.start(),
+					to_compare.length());
+				count2.account_equal(dont_compare.length());
+			}
+
+			if (haa->end() < hba->end()) {
+				haa++;
+			} else if (haa->end() == hba->end()) {
+				haa++, hba++;
+			} else {
+				hba++;
+			}
+		}
+
+		if (haa < haa_end || hba < hba_end) {
+			// there is something left to compare
+			to_compare = span::from_start_end(dont_compare.end(), hat.length);
+
+			count2.account(sa.c_str() + hat.start_query() + to_compare.start(),
+						   sb.c_str() + hbt.start_query() + to_compare.start(),
+						   to_compare.length());
+		}
+
+		// count.account(sa.c_str() + hat.start_query(),
+		// 			  sb.c_str() + hbt.start_query(), length);
+		// assert(count == count2);
+		count += count2;
+
 		// no need for double complement
-		count.account(sa.c_str() + hat.start_query(),
-					  sb.c_str() + hbt.start_query(), length);
+		// count.account(sa.c_str() + hat.start_query(),
+		// 			  sb.c_str() + hbt.start_query(), length);
 	} else if (hb.direction == homology::dir::reverse) {
 		// reverse b
 		count.account_rev(sa.c_str() + hat.start_query(), sb.c_str(),

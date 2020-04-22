@@ -9,6 +9,9 @@
 #include "evo_model.h"
 #include "sequence.h"
 
+#define LIKELY(X) (__builtin_expect((X), 1))
+#define UNLIKELY(X) (__builtin_expect((X), 0))
+
 std::vector<evo_model> process(const sequence &, const std::vector<sequence> &);
 
 class span
@@ -85,8 +88,9 @@ class span
 	span trim_unsafe(size_t start, size_t end) const
 	{
 		// Carefully handle cases where the given range is bigger than *this.
-		auto offset = start > this->start() ? start - this->start() : 0;
-		auto drift = this->end() > end ? this->end() - end : 0;
+		auto offset =
+			UNLIKELY(start > this->start()) ? start - this->start() : 0;
+		auto drift = UNLIKELY(this->end() > end) ? this->end() - end : 0;
 
 		auto that = *this;
 
@@ -104,7 +108,7 @@ class span
 
 	span shift_left(size_t offset) const
 	{
-		auto pos = start() >= offset ? start() - offset : 0;
+		auto pos = LIKELY(start() >= offset) ? start() - offset : 0;
 		return {pos, length()};
 	}
 
@@ -260,7 +264,7 @@ class homology
 
 		auto interval = span(offset, that.length);
 
-		that.anchors.clear();
+		that.anchors.reserve(anchors.size() / 2);
 		for (auto anchor : this->anchors) {
 			if (anchor.overlaps(interval)) {
 				that.anchors.push_back(
