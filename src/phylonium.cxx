@@ -46,6 +46,7 @@
 #include "io.h"
 #include "process.h"
 #include "sequence.h"
+#include "pfasta.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -249,7 +250,7 @@ int main(int argc, char *argv[])
 	auto queries = std::vector<sequence>(file_names.size());
 
 // read all genomes
-#pragma omp parallel for num_threads(THREADS)
+#pragma omp parallel for num_threads(THREADS) if(pfasta_threadsafe())
 	for (size_t i = 0; i < file_names.size(); i++) {
 		queries[i] = join(read_genome(file_names[i]));
 	}
