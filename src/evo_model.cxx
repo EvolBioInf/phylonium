@@ -1,6 +1,6 @@
 /**
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright 2018 - 2019 © Fabian Klötzl
+ * Copyright 2018 - 2020 © Fabian Klötzl
  */
 #include "evo_model.h"
 #include <algorithm>
@@ -10,10 +10,11 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include <random>
 #include "revseqcmp.h"
 #include "seqcmp.h"
 
-gsl_rng *RNG;
+extern std::mt19937 prng;
 
 /** @brief Turn a nucleotide into a 2bit representation.
  * This function uses a clever way to transform nucleotides (ACGT) into a 2bit
@@ -126,13 +127,9 @@ evo_model evo_model::bootstrap() const
 
 	auto subst_rate = substitutions / (double)homologs;
 
-	std::array<double, 2> p = {subst_rate, 1 - subst_rate};
-	std::array<unsigned int, 2> neu = {};
+	std::binomial_distribution<> d(homologs, subst_rate);
 
-	gsl_ran_multinomial(RNG, 2, homologs, p.data(),
-						reinterpret_cast<unsigned int *>(neu.data()));
-
-	ret.substitutions = neu[0];
+	ret.substitutions = d(prng);
 
 	return ret;
 }

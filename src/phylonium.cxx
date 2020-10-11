@@ -1,6 +1,6 @@
 /**
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright 2018 - 2019 © Fabian Klötzl
+ * Copyright 2018 - 2020 © Fabian Klötzl
  */
 /**
  * @file
@@ -33,9 +33,9 @@
 #include <fstream>
 #include <functional>
 #include <getopt.h>
-#include <gsl/gsl_rng.h>
 #include <iostream>
 #include <limits>
+#include <random>
 #include <string.h>
 #include <string>
 #include <unistd.h>
@@ -52,13 +52,13 @@
 #include <omp.h>
 #endif
 
-extern gsl_rng *RNG;
 double ANCHOR_P_VALUE = 0.025;
 int FLAGS = flags::none;
 int THREADS = 1;
 long unsigned int BOOTSTRAP = 0;
 int RETURN_CODE = EXIT_SUCCESS;
 std::string REFPOS_FILE_NAME = "";
+std::mt19937 prng;
 
 // TODO: This is a hack and should be redone at some point.
 size_t reference_index = 0;
@@ -74,16 +74,21 @@ size_t pick_first_pass(std::vector<sequence> &sequences);
 void cleanup_names(const std::string &reference_name,
 				   std::vector<std::string> &file_names);
 
+template <class T = std::mt19937,
+		  std::size_t N = T::state_size * sizeof(typename T::result_type)>
+auto properlySeededRandomEngine() -> typename std::enable_if<N, T>::type
+{
+	std::random_device source;
+	std::random_device::result_type random_data[(N - 1) / sizeof(source()) + 1];
+	std::generate(std::begin(random_data), std::end(random_data),
+				  std::ref(source));
+	std::seed_seq seeds(std::begin(random_data), std::end(random_data));
+	return T(seeds);
+}
+
 int main(int argc, char *argv[])
 {
-	RNG = gsl_rng_alloc(gsl_rng_default);
-	if (!RNG) {
-		err(1, "RNG allocation failed.");
-	}
-
-	// seed the random number generator with the current time
-	// TODO: enable seeding for reproducibility
-	gsl_rng_set(RNG, time(NULL));
+	prng = properlySeededRandomEngine<std::mt19937>();
 
 	int version_flag = 0;
 	bool two_pass = false;

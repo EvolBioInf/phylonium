@@ -5,7 +5,7 @@ This is the `phylonium` program for estimating the evolutionary distances betwee
 
 # Dependencies, Installation and Usage
 
-This program depends on two external libraries: [libdivsufsort](https://github.com/y-256/libdivsufsort) and the [GSL](https://www.gnu.org/software/gsl/). Both should be available for installation through a package manager of your choice. Furthermore, to build from the git repository the autotools are required.
+This program depends on an external library: [libdivsufsort](https://github.com/y-256/libdivsufsort). It should be available for installation through a package manager of your choice. Furthermore, to build from the git repository the autotools are required.
 
 Assuming all prerequisites are installed, the build can be started as follows. See the manual in case of compilation errors or when you try to compile on Arm: [manual](documentation/manual.pdf).
 
@@ -35,7 +35,7 @@ If you find this software useful, please cite our paper.
 
 # License
 
-Copyright © 2018 - 2019 Fabian Klötzl  
+Copyright © 2018 - 2020 Fabian Klötzl  
 License GPLv3+: GNU GPL version 3 or later.
 
 This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law. The full license text is available at <http://gnu.org/licenses/gpl.html>.
