@@ -1,4 +1,4 @@
-.TH PHYLONIUM "1" "2019-08-19" "@VERSION@" "phylonium manual"
+.TH PHYLONIUM "1" "2020-11-03" "@VERSION@" "phylonium manual"
 
 .SH NAME
 phylonium \- rapidly estimate evolutionary distances
@@ -39,7 +39,7 @@ Prints the synopsis and an explanation of available options.
 Outputs version information and acknowledgments.
 
 .SH COPYRIGHT
-Copyright \(co 2017 - 2019 Fabian Klötzl
+Copyright \(co 2017 - 2020 Fabian Klötzl
 License GPLv3+: GNU GPL version 3 or later.
 .br
 This is free software: you are free to change and redistribute it.
@@ -53,6 +53,7 @@ The full license text is available at <http://gnu.org/licenses/gpl.html>.
 2) SA construction: Mori, Y. (2005). Short description of improved two\-stage suffix sorting algorithm.
 .br
 3) Bootstrapping: Klötzl, F. and Haubold, B. (2016). Support Values for Genome Phylogenies
+4) Phylonium: Klötzl, F. and Haubold, B. (2020). Phylonium: Fast Estimation of Evolutionary Distances from Large Samples of Similar Genomes
 
 .SH BUGS
 .SS Reporting Bugs

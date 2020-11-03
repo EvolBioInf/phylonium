@@ -44,16 +44,16 @@ First, align the sequences and then use a maximum likelihood approach to find th
 
 \section{Installation from Source}
 
-\phylonium has two runtime prerequisites: \tool{libdivsufsort} and the \tool{GNU Scientific Library} (GSL). Install them via your package manager, for instance \lstinline!apt!.
+\phylonium requires \tool{libdivsufsort} for fast suffix array computation. Install it via your package manager, for instance \lstinline!apt!.
 
 \begin{lstlisting}
-%  sudo apt install libdivsufsort libgsl23
+%  sudo apt install libdivsufsort
 \end{lstlisting}
 
 At the moment \phylonium has to be build directly from the source code. This requires further dependencies.
 
 \begin{lstlisting}
-%  sudo apt install libdivsufsort-dev libgsl-dev build-essential automake
+%  sudo apt install libdivsufsort-dev build-essential automake
 \end{lstlisting}
 
 Get a local copy of \phylonium by cloning the repository:
