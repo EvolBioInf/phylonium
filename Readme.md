@@ -30,7 +30,7 @@ For a more detailed description see the [manual](documentation/manual.pdf) or [p
 
 If you find this software useful, please cite our paper.
 
-> Fabian Klötzl, Bernhard Haubold, Phylonium: Fast Estimation of Evolutionary Distances from Large Samples of Similar Genomes, Bioinformatics, btz903, https://doi.org/10.1093/bioinformatics/btz903
+> Fabian Klötzl, Bernhard Haubold; Phylonium: Fast Estimation of Evolutionary Distances from Large Samples of Similar Genomes; Bioinformatics, Volume 36, Issue 7, 1 April 2020, Pages 2040–2046, https://doi.org/10.1093/bioinformatics/btz903
 
 
 # License
