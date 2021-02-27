@@ -1,17 +1,13 @@
 /**
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright 2018 - 2019 © Fabian Klötzl
+ * Copyright 2018 - 2021 © Fabian Klötzl
  */
 #pragma once
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <gsl/gsl_randist.h>
-#include <gsl/gsl_rng.h>
 #include <iterator>
-
-extern gsl_rng *RNG;
 
 /** @brief An "evolutionary model". Basically this class counts mutations. */
 class evo_model
