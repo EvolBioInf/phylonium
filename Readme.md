@@ -35,7 +35,7 @@ If you find this software useful, please cite our paper.
 
 # License
 
-Copyright © 2018 - 2020 Fabian Klötzl  
+Copyright © 2018 - 2021 Fabian Klötzl  
 License GPLv3+: GNU GPL version 3 or later.
 
 This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law. The full license text is available at <http://gnu.org/licenses/gpl.html>.
