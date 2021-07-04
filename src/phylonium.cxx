@@ -76,7 +76,7 @@ void cleanup_names(const std::string &reference_name,
 
 template <class T = std::mt19937,
 		  std::size_t N = T::state_size * sizeof(typename T::result_type)>
-auto properlySeededRandomEngine() -> typename std::enable_if<N, T>::type
+auto properlySeededRandomEngine()
 {
 	std::random_device source;
 	std::random_device::result_type random_data[(N - 1) / sizeof(source()) + 1];
