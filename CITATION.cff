@@ -1,0 +1,20 @@
+cff-version: 1.1.0
+message: Please cite the following works when using this software.
+authors:
+  - family-names: Klötzl
+    given-names: Fabian
+  - family-names: Haubold
+    given-names: Bernhard
+doi: 10.1093/BIOINFORMATICS/BTZ903
+identifiers:
+  - type: doi
+    value: 10.1093/BIOINFORMATICS/BTZ903
+  - type: other
+    value: urn:issn:1367-4803
+  - type: other
+    value: pmcid:7141870
+  - type: other
+    value: pmid:31790149
+title: >-
+  Phylonium: fast estimation of evolutionary distances from large samples of
+  similar genomes
