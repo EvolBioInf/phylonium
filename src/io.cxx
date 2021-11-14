@@ -41,8 +41,18 @@ std::string extract_genome(const std::string &s_file_name)
 	// left is the position one of to the right of the path separator
 
 	// find the extension
-	auto right = s_file_name.find('.', left);
-	right = (right == std::string::npos) ? s_file_name.size() : right;
+	auto right = s_file_name.rfind('.');
+	if (right != std::string::npos) {
+		auto ext = s_file_name.substr(right);
+		if (ext == ".fa" || ext == ".fas" || ext == ".fasta") {
+			// pass and strip
+		} else {
+			// don't strip unkown extention
+			right = s_file_name.size();
+		}
+	} else {
+		right = s_file_name.size();
+	}
 
 	// copy only the file name, not its path or extension
 	return s_file_name.substr(left, right - left);
