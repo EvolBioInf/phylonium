@@ -1,6 +1,6 @@
 /**
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright 2018 - 2019 © Fabian Klötzl
+ * Copyright 2018 - 2022 © Fabian Klötzl
  */
 /**
  * @file
@@ -20,6 +20,12 @@
 #include <array>
 #include <memory>
 #include <string>
+
+#include "config.h"
+
+#ifdef HAVE_LIBDNA
+#include <kloetzl/dna.hpp>
+#endif
 
 #include "esa.h"
 #include "global.h"

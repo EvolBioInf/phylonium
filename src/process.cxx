@@ -1,9 +1,11 @@
 /**
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright 2018 - 2019 © Fabian Klötzl
+ * Copyright 2018 - 2022 © Fabian Klötzl
  */
 
 #include "process.h"
+#include "config.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -13,10 +15,15 @@
 #include <iostream>
 #include <string>
 #include <vector>
+
 #include "esa.h"
 #include "evo_model.h"
 #include "global.h"
 #include "sequence.h"
+
+#ifdef HAVE_LIBDNA
+#include <kloetzl/dna.hpp>
+#endif
 
 double shuprop(size_t, double, size_t);
 
@@ -163,11 +170,17 @@ double shuprop(size_t x, double p, size_t l)
  */
 size_t lcp(const char *S, const char *Q, size_t remaining)
 {
+#ifdef HAVE_LIBDNA
+	auto ptr = dnax_find_first_mismatch(S, S + remaining, Q);
+	return ptr - S;
+#else
 	size_t length = 0;
+
 	while (length < remaining && S[length] == Q[length]) {
 		length++;
 	}
 	return length;
+#endif
 }
 
 /**

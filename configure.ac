@@ -14,7 +14,7 @@ m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 AC_LANG(C++)
 AC_OPENMP
 
-AX_CXX_COMPILE_STDCXX(14)
+AX_CXX_COMPILE_STDCXX(17)
 
 # Execute all tests using C
 AC_LANG(C)
@@ -22,6 +22,19 @@ AC_OPENMP
 AX_GCC_FUNC_ATTRIBUTE(ifunc)
 
 AC_CHECK_LIB([m],[cos])
+
+AC_ARG_ENABLE([libdna],
+	[AS_HELP_STRING([--enable-libdna],[link against libdna @<:@default: no@:>@])],
+	[with_libdna=${enableval}],[with_libdna=no]
+	)
+
+AS_IF([test "x${with_libdna}" = xyes], [
+	AC_CHECK_HEADERS([kloetzl/dna.h],[have_libdna=yes],[have_libdna=no])
+	AC_CHECK_LIB(dna, dna_version, [], [have_libdna=no])
+	AS_IF([test "x$have_libdna" = "xno"],
+		[AC_MSG_ERROR([Missing libdna.])
+	])
+])
 
 # The libdivsufsort header contains some Microsoft extension making
 # compilation fail on certain systems (i.e. OS X). Add the following

@@ -1,7 +1,7 @@
 check_PROGRAMS= simf unittests
 
 simf_SOURCES= simf.cxx
-simf_CPPFLAGS= -std=c++14 -Wall -Wextra
+simf_CPPFLAGS= -std=c++17 -Wall -Wextra
 simf_CXXFLAGS= -ggdb
 
 unittests_SOURCES= \
@@ -17,7 +17,7 @@ unittests_SOURCES= \
 	Tmain.cxx \
 	Tprocess.cxx \
 	Tsequence.cxx
-unittests_CPPFLAGS= -I$(top_srcdir)/src -I$(top_srcdir)/libs -std=c++14 -Wall -Wextra
+unittests_CPPFLAGS= -I$(top_srcdir)/src -I$(top_srcdir)/libs -std=c++17 -Wall -Wextra
 unittests_CXXFLAGS= -ggdb
 unittests_LDADD = \
 	$(top_builddir)/libs/libcompat.a \

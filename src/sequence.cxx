@@ -1,6 +1,6 @@
 /**
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright 2018 - 2019 © Fabian Klötzl
+ * Copyright 2018 - 2022 © Fabian Klötzl
  */
 /**
  * @file
@@ -17,6 +17,12 @@
 #include <limits.h>
 #include <memory>
 #include <vector>
+
+#include "config.h"
+
+#ifdef HAVE_LIBDNA
+#include <kloetzl/dna.hpp>
+#endif
 
 /** @brief Create a new sequence object.
  * @param name_ - The new name.
@@ -63,6 +69,9 @@ std::string sequence::to_fasta() const
  */
 std::string reverse(const std::string &base)
 {
+#ifdef HAVE_LIBDNA
+	return dna4::revcomp(base);
+#else
 	std::string ret{};
 	ret.reserve(base.size());
 
@@ -87,6 +96,7 @@ std::string reverse(const std::string &base)
 	delete[] str;
 
 	return ret;
+#endif
 }
 
 /** @brief Filter out weird nucleotides.
@@ -95,6 +105,9 @@ std::string reverse(const std::string &base)
  */
 std::string filter_nucl(const std::string &base)
 {
+#ifdef HAVE_LIBDNA
+	return dnax::extract_dna4(base);
+#else
 	std::string ret{};
 	ret.reserve(base.size());
 
@@ -126,6 +139,7 @@ std::string filter_nucl(const std::string &base)
 	delete[] str;
 
 	return ret;
+#endif
 }
 
 /** @brief Compute the GC content.
