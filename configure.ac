@@ -40,11 +40,11 @@ AS_IF([test "x${with_libdna}" = xyes], [
 # compilation fail on certain systems (i.e. OS X). Add the following
 # flag so the build runs smoothly.
 CPPFLAGS="$CPPFLAGS -fms-extensions"
-AC_CHECK_HEADERS([divsufsort.h],[have_libdivsufsort=yes],[have_libdivsufsort=no])
-AC_CHECK_LIB(divsufsort, divsufsort, [], [have_libdivsufsort=no])
+AC_CHECK_HEADERS([divsufsort64.h],[have_libdivsufsort64=yes],[have_libdivsufsort64=no])
+AC_CHECK_LIB(divsufsort64, divsufsort64, [], [have_libdivsufsort64=no])
 
-AS_IF([test "x$have_libdivsufsort" = "xno"],
-	[AC_MSG_ERROR([Missing libdivsufsort.])
+AS_IF([test "x$have_libdivsufsort64" = "xno"],
+	[AC_MSG_ERROR([Missing libdivsufsort64.])
 ])
 
 AC_ARG_ENABLE([x86simd],

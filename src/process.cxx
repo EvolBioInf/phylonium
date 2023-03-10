@@ -219,7 +219,7 @@ auto anchor_homologies(const esa &ref, size_t threshold, const sequence &seq)
 	auto anchor = [&]() {
 		auto inter = ref.get_match_cached(seq.c_str() + this_pos_Q,
 										  query_length - this_pos_Q);
-		this_length = std::max(inter.l, 0);
+		this_length = std::max(inter.l, 0l);
 		this_pos_S = ref.SA[inter.i];
 		return inter.i == inter.j && this_length >= threshold;
 	};

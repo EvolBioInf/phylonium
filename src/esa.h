@@ -13,7 +13,8 @@
 
 #include <sys/types.h>
 
-#include <divsufsort.h>
+#include <divsufsort64.h>
+using saidx_t = saidx64_t;
 
 #include "sequence.h"
 
@@ -45,7 +46,7 @@ typedef struct {
 class esa
 {
 	/** Length of the arrays. */
-	int m_size = 0;
+	saidx_t m_size = 0;
 	/** The sequence at the basis of the ESA. */
 	sequence m_master{};
 
