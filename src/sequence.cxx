@@ -25,7 +25,7 @@
 #include <kloetzl/dna.hpp>
 #endif
 
-using saidx_t = saidx64_t;
+using saidx64_t = saidx64_t;
 
 /** @brief Create a new sequence object.
  * @param name_ - The new name.
@@ -34,7 +34,7 @@ using saidx_t = saidx64_t;
 sequence::sequence(std::string name_, std::string nucl_) noexcept
 	: name{std::move(name_)}, nucl{std::move(nucl_)}, length{nucl.size()}
 {
-	const size_t LENGTH_LIMIT = (size_t)1 << (sizeof(saidx_t) * CHAR_BIT - 2);
+	const size_t LENGTH_LIMIT = (size_t)1 << (sizeof(saidx64_t) * CHAR_BIT - 2);
 	if (this->size() > LENGTH_LIMIT) {
 		errx(1,
 			 "The input sequence %s is too long. The technical limit is %zu.",
