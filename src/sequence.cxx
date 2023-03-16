@@ -13,11 +13,11 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <divsufsort64.h>
 #include <err.h>
 #include <limits.h>
 #include <memory>
 #include <vector>
-#include <divsufsort64.h>
 
 #include "config.h"
 
