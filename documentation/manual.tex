@@ -20,7 +20,7 @@
 
 
 \title{Computing Phylogenies with Phylonium}
-\author{Fabian Klötzl\\\normalsize{kloetzl@evolbio.mpg.de}}
+\author{Fabian Klötzl\\\normalsize{fabian-phylonium@kloetzl.info}}
 \date{\isodate{\today}}
 
 \lstset{
@@ -105,6 +105,7 @@ Options:
   -2, --2pass          Enable two-pass algorithm
   -b, --bootstrap=N    Print additional bootstrap matrices
   --complete-deletion  Delete the whole aligned column in case of gaps
+  -p FILE              Print reference positions to FILE (implies complete deletion)
   -r FILE              Set the reference genome
   -t, --threads=N      The number of threads to be used; by default, all available processors are used
   -v, --verbose        Print additional information

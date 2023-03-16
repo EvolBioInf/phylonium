@@ -1,4 +1,4 @@
-.TH PHYLONIUM "1" "2020-11-03" "@VERSION@" "phylonium manual"
+.TH PHYLONIUM "1" "2023-03-16" "@VERSION@" "phylonium manual"
 
 .SH NAME
 phylonium \- rapidly estimate evolutionary distances
@@ -29,6 +29,12 @@ The number of threads to be used; by default, all available processors are used.
 .br
 Multithreading is only available if \fBphylonium\fR was compiled with OpenMP support.
 .TP
+\fB\-p\fR \fIFILE\fR
+Print the reference positions to the given path. Also sets complete deletion.
+.TP
+\fB\-\-progress\fR[=\fIWHEN\fR]
+Print a progress bar. \fIWHEN\fR can be 'auto' (default if omitted), 'always', or 'never'.
+.TP
 \fB\-v\fR, \fB\-\-verbose\fR
 Prints additional information, including the amount of found homology. Apply multiple times for extra verboseness.
 .TP
@@ -39,7 +45,7 @@ Prints the synopsis and an explanation of available options.
 Outputs version information and acknowledgments.
 
 .SH COPYRIGHT
-Copyright \(co 2017 - 2020 Fabian Klötzl
+Copyright \(co 2017 - 2023 Fabian Klötzl
 License GPLv3+: GNU GPL version 3 or later.
 .br
 This is free software: you are free to change and redistribute it.
@@ -57,4 +63,4 @@ The full license text is available at <http://gnu.org/licenses/gpl.html>.
 
 .SH BUGS
 .SS Reporting Bugs
-Please report bugs to <kloetzl@evolbio.mpg.de>.
+Please report bugs to <fabian-phylonium@kloetzl.info>.

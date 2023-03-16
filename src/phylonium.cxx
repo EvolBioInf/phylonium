@@ -393,6 +393,8 @@ void usage(int status)
 		"gaps\n"
 		"  -p FILE              Print reference positions to FILE (implies "
 		"complete deletion)\n"
+		"    --progress=WHEN    Print a progress bar 'always', 'never', or "
+		"'auto'; default: auto\n"
 		"  -r FILE              Set the reference genome\n"
 #ifdef _OPENMP
 		"  -t, --threads=N      The number of threads to be used; by default, "
