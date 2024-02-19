@@ -1,4 +1,4 @@
-AC_INIT([phylonium], [1.7], [fabian-phylonium@kloetzl.info])
+AC_INIT([phylonium],[1.7],[fabian-phylonium@kloetzl.info])
 AC_CONFIG_SRCDIR([src/phylonium.cxx])
 AM_INIT_AUTOMAKE([-Wall foreign ])
 AC_CONFIG_MACRO_DIR([m4])
