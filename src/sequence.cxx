@@ -25,8 +25,6 @@
 #include <kloetzl/dna.hpp>
 #endif
 
-using saidx64_t = saidx64_t;
-
 /** @brief Create a new sequence object.
  * @param name_ - The new name.
  * @param nucl_ - The new nucleotide sequence.
