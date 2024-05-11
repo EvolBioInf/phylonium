@@ -1,6 +1,6 @@
 /**
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright 2018 - 2022 © Fabian Klötzl
+ * Copyright 2018 - 2024 © Fabian Klötzl
  */
 /**
  * @file
@@ -13,11 +13,11 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <divsufsort64.h>
 #include <err.h>
 #include <limits.h>
 #include <memory>
 #include <vector>
-#include <divsufsort64.h>
 
 #include "config.h"
 
@@ -32,7 +32,9 @@
 sequence::sequence(std::string name_, std::string nucl_) noexcept
 	: name{std::move(name_)}, nucl{std::move(nucl_)}, length{nucl.size()}
 {
-	const size_t LENGTH_LIMIT = (size_t)1 << (sizeof(saidx64_t) * CHAR_BIT - 2);
+	// on 32bit systems size_t is smaller than the index
+	const auto sizeof_idx = std::min(sizeof(size_t), sizeof(saidx64_t));
+	const size_t LENGTH_LIMIT = (size_t)1 << (sizeof_idx * CHAR_BIT - 2);
 	if (this->size() > LENGTH_LIMIT) {
 		errx(1,
 			 "The input sequence %s is too long. The technical limit is %zu.",
