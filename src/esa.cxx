@@ -31,7 +31,7 @@
 #include "global.h"
 
 /** @brief The prefix length up to which LCP-intervals are cached. */
-const size_t CACHE_LENGTH = 4;
+const size_t CACHE_LENGTH = 6;
 
 /** @brief Map a code to the character. */
 constexpr char code2char(ssize_t code) noexcept
