@@ -415,6 +415,7 @@ void usage(int status)
 		"all available processors are used\n"
 #endif
 		"  -v, --verbose        Print additional information\n"
+		"      --distance=OPT   Choose between raw, jc corrected and ANI\n"
 		"  -h, --help           Display this help and exit\n"
 		"      --version        Output version information and "
 		"acknowledgments\n"};
@@ -430,7 +431,7 @@ void version(void)
 {
 	const char str[] = {
 		"phylonium " VERSION "\n"
-		"Copyright (C) 2017 - 2019 Fabian Klötzl\n"
+		"Copyright (C) 2017 - 2025 Fabian Klötzl\n"
 		"License GPLv3+: GNU GPL version 3 or later "
 		"<http://gnu.org/licenses/gpl.html>\n"
 		"This is free software: you are free to change and redistribute it.\n"
