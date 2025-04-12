@@ -72,7 +72,7 @@ esa::esa(const sequence &seq) : m_size{seq.size() * 2 + 1}
 	S = m_master.get_nucl() + '#' + reverse(m_master.get_nucl());
 	SA = std::make_unique<saidx64_t[]>(m_size);
 	divsufsort64(reinterpret_cast<const unsigned char *>(S.c_str()), SA.get(),
-			   m_size);
+				 m_size);
 
 	init_LCP();
 	init_CLD();

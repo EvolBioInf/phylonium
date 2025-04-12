@@ -10,7 +10,9 @@ enum flags {
 	extra_verbose,
 	complete_deletion = 4,
 	print_progress = 8,
-	print_positions = 16
+	print_positions = 16,
+	dist_ani = 32,
+	dist_raw = 64
 };
 extern int FLAGS;
 extern int THREADS;

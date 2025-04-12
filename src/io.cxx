@@ -165,6 +165,13 @@ void just_print(const std::vector<std::string> &names,
 void print_matrix(const std::vector<sequence> &queries,
 				  const std::vector<evo_model> &matrix)
 {
+	auto dist_getter =
+		FLAGS & flags::dist_raw
+			? [](const evo_model &em) { return em.estimate_raw(); }
+		: FLAGS & flags::dist_ani
+			? [](const evo_model &em) { return em.estimate_ani(); }
+			: [](const evo_model &em) { return em.estimate_JC(); };
+
 	auto N = queries.size();
 	auto names = std::vector<std::string>(N);
 	std::transform(std::begin(queries), std::end(queries), std::begin(names),
@@ -172,8 +179,7 @@ void print_matrix(const std::vector<sequence> &queries,
 
 	auto dist_matrix = std::vector<double>(N * N, NAN);
 	std::transform(std::begin(matrix), std::end(matrix),
-				   std::begin(dist_matrix),
-				   [](const evo_model &em) { return em.estimate_JC(); });
+				   std::begin(dist_matrix), dist_getter);
 
 	// print warnings before distance matrix
 	print_warnings(queries, names, dist_matrix, matrix);
@@ -186,9 +192,8 @@ void print_matrix(const std::vector<sequence> &queries,
 						   std::begin(neu),
 						   [](const evo_model &em) { return em.bootstrap(); });
 
-			std::transform(
-				std::begin(neu), std::end(neu), std::begin(dist_matrix),
-				[](const evo_model &em) { return em.estimate_JC(); });
+			std::transform(std::begin(neu), std::end(neu),
+						   std::begin(dist_matrix), dist_getter);
 
 			just_print(names, dist_matrix);
 		}
@@ -201,13 +206,12 @@ void print_matrix(const std::vector<sequence> &queries,
 			auto index = i * N + j;
 			auto dist = dist_matrix[index];
 
-			if (!std::isnan(dist)) {
-				double cov1 = matrix[index].coverage(queries[i].size());
-				double cov2 = matrix[index].coverage(queries[j].size());
+			if (std::isnan(dist)) continue;
+			double cov1 = matrix[index].coverage(queries[i].size());
+			double cov2 = matrix[index].coverage(queries[j].size());
 
-				sum += cov1 + cov2;
-				counter += 2;
-			}
+			sum += cov1 + cov2;
+			counter += 2;
 		}
 	}
 

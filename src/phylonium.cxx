@@ -1,6 +1,6 @@
 /**
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright 2018 - 2020 © Fabian Klötzl
+ * Copyright 2018 - 2025 © Fabian Klötzl
  */
 /**
  * @file
@@ -100,6 +100,7 @@ int main(int argc, char *argv[])
 		{"2pass", no_argument, NULL, '2'},
 		{"bootstrap", required_argument, NULL, 'b'},
 		{"complete-deletion", no_argument, NULL, 0},
+		{"distance", required_argument, NULL, 0},
 		{"help", no_argument, NULL, 'h'},
 		{"progress", optional_argument, NULL, 0},
 		{"threads", required_argument, NULL, 't'},
@@ -142,6 +143,19 @@ int main(int argc, char *argv[])
 							  optarg);
 					}
 					break;
+				}
+				if (arg_str == "distance") {
+					if (strcasecmp(optarg, "raw") == 0) {
+						FLAGS |= flags::dist_raw;
+					} else if (strcasecmp(optarg, "jc") == 0) {
+						// nothing
+					} else if (strcasecmp(optarg, "ani") == 0) {
+						FLAGS |= flags::dist_ani;
+					} else {
+						soft_errx("ignoring argument for --distance '%s' "
+								  "expected one of 'raw', 'jc', or 'ani'",
+								  optarg);
+					}
 				}
 				break;
 			}

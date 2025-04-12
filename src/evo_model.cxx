@@ -106,6 +106,18 @@ double evo_model::estimate_raw(bool zero_on_error) const noexcept
 	return SNPs / (double)nucl;
 }
 
+/** @brief Estimate the average nucleotide identity.
+ * @returns the ani.
+ */
+double evo_model::estimate_ani(bool zero_on_error) const noexcept
+{
+	size_t nucl = total();
+	if (nucl == 0) return zero_on_error ? 0.0 : NAN;
+
+	size_t SNPs = substitutions;
+	return 1.0 - SNPs / (double)nucl;
+}
+
 /** @brief Estimate the evolutionary distance via the Jukes-Cantor correction.
  * @returns the evolutionary distance.
  */
