@@ -115,7 +115,7 @@ double evo_model::estimate_ani(bool zero_on_error) const noexcept
 	if (nucl == 0) return zero_on_error ? 0.0 : NAN;
 
 	size_t SNPs = substitutions;
-	return 1.0 - SNPs / (double)nucl;
+	return (1.0 - SNPs / (double)nucl) * 100;
 }
 
 /** @brief Estimate the evolutionary distance via the Jukes-Cantor correction.

@@ -146,7 +146,7 @@ void just_print(const std::vector<std::string> &names,
 	// Produce output in PHYLIP distance matrix format
 	std::cout << N << std::endl;
 	std::cout.precision(4);
-	std::cout << std::scientific;
+	std::cout << (FLAGS & flags::dist_ani ? std::dec : std::scientific);
 
 	for (size_t i = 0; i < N; i++) {
 		std::cout << names[i];
