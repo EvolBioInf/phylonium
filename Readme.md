@@ -1,6 +1,11 @@
 # Phylonium - fast and accurate estimation of evolutionary distances
 
-This is the `phylonium` program for estimating the evolutionary distances between closely related genomes. It is much faster than alignment based approaches for phylogeny reconstruction and usually more accurate than competing alignment-free methods.
+This is the `phylonium` program for estimating the evolutionary
+distances between closely related genomes. It is much faster than
+alignment based approaches for phylogeny reconstruction and usually
+more accurate than competing alignment-free methods. For more details
+on `phylonium`, see our
+[publication](https://pubmed.ncbi.nlm.nih.gov/31790149/).
 
 
 # Dependencies, Installation and Usage
